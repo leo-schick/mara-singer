@@ -82,7 +82,7 @@ else
 	echo '  singer-cli.sh install tap-exchangeratesapi'
 	echo '  singer-cli.sh install target-csv'
 	echo ''
-	echo '  # usae packages'
+	echo '  # call packages'
 	echo '  tap-exchangeratesapi | target-csv'
 	echo ''
 	echo '  # uninstall packages'

@@ -1,4 +1,4 @@
-import enum
+import os
 import pathlib
 
 from mara_pipelines.pipelines import Command
@@ -6,18 +6,15 @@ from mara_page import _, html
 
 from .. import config
 
-class PipeFormat(enum.EnumMeta):
-    """Different pipe formats"""
-    CSV = 'csv'
-    JSONL = 'jsonl'
-
 class _SingerTapCommand(Command):
-    def __init__(self, tap_name: str, config_file_name: str = None, catalog_file_name: str = None, state_file_name: str = None) -> None:
+    def __init__(self, tap_name: str, config_file_name: str = None, catalog_file_name: str = None, state_file_name: str = None, pass_state_file: bool = None, use_legacy_properties_arg: bool = False) -> None:
         #assert all(v is None for v in [config_file_name]), f"unimplemented parameter for _SingerTapCommand"
         self.tap_name = tap_name
         self.config_file_name = config_file_name if config_file_name else f'{tap_name}.json'
         self.state_file_name = state_file_name
+        self.pass_state_file = pass_state_file
         self.catalog_file_name = catalog_file_name
+        self.use_legacy_properties_arg = use_legacy_properties_arg
 
     def config_file_path(self) -> pathlib.Path:
         return pathlib.Path(config.config_dir()) / self.config_file_name
@@ -29,14 +26,20 @@ class _SingerTapCommand(Command):
         return pathlib.Path(config.catalog_dir()) / self.catalog_file_name
 
     def shell_command(self):
-        #state_file_path = None
-        #if self.state_file_name and os.path.exists(self.state_file_path()):
-        #    state_file_path = self.state_file_path()
+        state_file_path = None
+        if self.state_file_name and os.path.exists(self.state_file_path()) and os.stat(self.state_file_path()).st_size != 0:
+            state_file_path = self.state_file_path()
 
-        return (f'{self.tap_name}'
+        command = (f'{self.tap_name}'
                 + f' --config {self.config_file_path()}'
-                #+ (f' --state {state_file_path}' if state_file_path else '')
-                + (f' --catalog {self.catalog_file_path()}' if self.catalog_file_name else ''))
+                + (f' --state {state_file_path}' if state_file_path and self.pass_state_file else ''))
+
+        if self.use_legacy_properties_arg:
+            command += f' --properties {self.catalog_file_path()}' if self.catalog_file_name else ''
+        else:
+            command += f' --catalog {self.catalog_file_path()}' if self.catalog_file_name else ''
+
+        return command
 
     def html_doc_items(self) -> [(str, str)]:
         config = self.config_file_path().read_text().strip('\n') if self.config_file_path().exists() else '-- file not found'
