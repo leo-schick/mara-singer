@@ -5,10 +5,21 @@ if [[ $1 == 'install' ]]; then
 	## install package
 
 	PACKAGE_NAME=$2
-	
+
 	if [[ $PACKAGE_NAME == '' ]]; then
 		echo 'Package name not given'
 		exit 1
+	fi
+
+	PIP_INSTALL_PARAM=$PACKAGE_NAME
+	if [[ $PACKAGE_NAME = git+* ]]; then
+
+		PACKAGE_NAME=$(cut -d '=' -f2 <<< "$PIP_INSTALL_PARAM")
+
+		if [[ $PACKAGE_NAME == '' ]] || [[ $PACKAGE_NAME == $PIP_INSTALL_PARAM ]]; then
+			echo 'When installing a package with git+, you have to add #egg= to specify the package name'
+			exit 1
+		fi
 	fi
 
 	CURRENT_ENV=$VIRTUAL_ENV
@@ -23,7 +34,7 @@ if [[ $1 == 'install' ]]; then
 	python -m venv $PACKAGE_VENV
 	source $PACKAGE_VENV/bin/activate
 	pip install wheel
-	pip install $PACKAGE_NAME
+	pip install $PIP_INSTALL_PARAM
 	source $CURRENT_ENV/bin/activate
 	ln -s ../../.singer-venv/$PACKAGE_NAME/bin/$PACKAGE_NAME $CURRENT_ENV/bin/$PACKAGE_NAME
 
