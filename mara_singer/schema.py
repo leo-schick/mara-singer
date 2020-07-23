@@ -41,15 +41,15 @@ def __(db: dbs.BigQueryDB, jsonschema, table_name: str = None, key_properties: [
     return sql
 
 @singledispatch
-def _jsonschema_property_to_sql_field_definition(db: object, property_name, property_definition, key_properties: [str] = None):
+def _jsonschema_property_to_sql_field_definition(db: object, property_name, property_definition, key_properties: [str] = None, ignore_nullable: bool = False):
     raise NotImplementedError(f'Please implement _jsonschema_property_to_sql_field_definition for type "{db.__class__.__name__}"')
 
 @_jsonschema_property_to_sql_field_definition.register(str)
-def __(alias: str, property_name, property_definition, key_properties: [str] = None):
+def __(alias: str, property_name, property_definition, key_properties: [str] = None, ignore_nullable: bool = False):
     return _jsonschema_property_to_sql_field_definition(dbs.db(alias), property_name=property_name, property_definition=property_definition, key_properties=key_properties)
 
 @_jsonschema_property_to_sql_field_definition.register(dbs.BigQueryDB)
-def __(db: dbs.BigQueryDB, property_name, property_definition, key_properties: [str] = None):
+def __(db: dbs.BigQueryDB, property_name, property_definition, key_properties: [str] = None, ignore_nullable: bool = False):
     field_type = None
     is_nullable = None
 
@@ -82,6 +82,9 @@ def __(db: dbs.BigQueryDB, property_name, property_definition, key_properties: [
                         field_type = 'STRUCT<{}>'.format(', '.join(sub_properties))
                 else:
                     raise Exception(f'Unknown usage of type {type} for property {property_name}')
+            elif type == "array":
+                if 'items' in property_definition:
+                    field_type = 'ARRAY<{}>'.format(_jsonschema_property_to_sql_field_definition(db, property_name=None, property_definition=property_definition['items']))
 
     if not field_type and 'anyOf' in property_definition:
         if property_definition['anyOf'][0]['type'] != "array":
@@ -98,7 +101,11 @@ def __(db: dbs.BigQueryDB, property_name, property_definition, key_properties: [
     if is_nullable and key_properties and property_name in key_properties:
         is_nullable = False
 
-    if is_nullable:
+    if is_nullable and not ignore_nullable:
+        if not property_name:
+            return field_type
         return '{} {}'.format(property_name, field_type)
     else:
+        if not property_name:
+            return field_type
         return '{} {} NOT NULL'.format(property_name, field_type)
