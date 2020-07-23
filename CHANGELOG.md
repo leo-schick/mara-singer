@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.1
+
+- fix new catalog creation
+- fix issue with jsonschema array table creation
+
 ## 0.3.0
 
 - add support for git+ installation via singer-cli.sh
