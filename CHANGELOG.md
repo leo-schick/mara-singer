@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.0
+
+- add support for git+ installation via singer-cli.sh
+- add support for requirements installation via singer-cli.sh
+- fix: when catalog file does not exist, create a new catalog
+
 ## 0.2.0
 
 - add support for stream property selection
