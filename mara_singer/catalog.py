@@ -1,3 +1,4 @@
+import os
 import json
 import pathlib
 import singer.catalog
@@ -20,7 +21,10 @@ class SingerCatalog:
 
     def _load_catalog(self) -> singer.catalog.Catalog:
         if not self._catalog:
-            self._catalog = singer.catalog.Catalog.load(self.catalog_file_path())
+            if os.path.isfile(self.catalog_file_path()):
+                self._catalog = singer.catalog.Catalog.load(self.catalog_file_path())
+            else:
+                self._catalog = singer.catalog.Catalog()
         return self._catalog
 
     @property
