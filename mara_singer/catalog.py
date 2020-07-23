@@ -24,7 +24,7 @@ class SingerCatalog:
             if os.path.isfile(self.catalog_file_path()):
                 self._catalog = singer.catalog.Catalog.load(self.catalog_file_path())
             else:
-                self._catalog = singer.catalog.Catalog()
+                self._catalog = singer.catalog.Catalog(streams=[])
         return self._catalog
 
     @property
