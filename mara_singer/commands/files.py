@@ -65,6 +65,10 @@ class SingerTapToFile(_SingerTapCommand):
 
     def run(self) -> bool:
 
+        if not os.path.exists(self.destination_path()):
+            log(message=f"The destination path '{self.destination_path()}' does not exist.", is_error=True)
+            return False
+
         # create temp catalog (if necessary)
         tmp_catalog_file_path = None
         if self.stream_selection:

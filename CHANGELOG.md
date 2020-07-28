@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.2
+
+- add proper error message when destination path for SingerTapToFile does not exist
+- fix issue with create-table from jsonschema function when type is not defined in array
+- fix issue with BigQuery create-table from jsonschema function when array is not nullable
+
 ## 0.3.1
 
 - fix new catalog creation

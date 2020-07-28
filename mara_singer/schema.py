@@ -54,7 +54,12 @@ def __(db: dbs.BigQueryDB, property_name, property_definition, key_properties: [
     is_nullable = None
 
     if not field_type and 'type' in property_definition:
-        for type in property_definition['type']:
+        if isinstance(property_definition['type'], list):
+            typeList = property_definition['type']
+        else:
+            typeList = [property_definition['type']]
+
+        for type in typeList:
             if type == "null":
                 is_nullable = True
             if type == "string":
@@ -100,6 +105,11 @@ def __(db: dbs.BigQueryDB, property_name, property_definition, key_properties: [
 
     if is_nullable and key_properties and property_name in key_properties:
         is_nullable = False
+
+    # Big Query does not support NOT NULL arrays. When you try to create a column with ARRAY<> NOT NULL, you get the error:
+    #   NOT NULL cannot be applied to ARRAY field '<COLUMN_NAME>'. NULL arrays are always stored as an empty array.
+    if str.startswith(field_type, 'ARRAY') and not is_nullable:
+        is_nullable = True
 
     if is_nullable and not ignore_nullable:
         if not property_name:
