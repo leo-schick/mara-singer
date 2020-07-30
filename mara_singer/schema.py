@@ -67,6 +67,8 @@ def __(db: dbs.BigQueryDB, property_name, property_definition, key_properties: [
                     continue # sometimes e.g. tap-adwords has 'null, integer, string' as a type --> is the money type. We assume here always to use the integer value
                 field_type = "STRING"
                 if 'format' in property_definition:
+                    if property_definition['format'] == 'date':
+                        field_type = 'DATE'
                     if property_definition['format'] == 'date-time':
                         field_type = 'timestamp'
             elif type == "boolean":

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.3
+
+- add support DATE data type in create-table from jsonschema function
+
 ## 0.3.2
 
 - add proper error message when destination path for SingerTapToFile does not exist
