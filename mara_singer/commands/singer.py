@@ -16,6 +16,18 @@ class _SingerTapCommand(Command):
         self.catalog_file_name = catalog_file_name
         self.use_legacy_properties_arg = use_legacy_properties_arg
 
+    def run(self) -> bool:
+        """
+        Runs the command
+
+        Returns:
+            False on failure
+        """
+        from .. import shell
+        shell_command = self.shell_command()
+
+        return shell.singer_run_shell_command(shell_command)
+
     def config_file_path(self) -> pathlib.Path:
         return pathlib.Path(config.config_dir()) / self.config_file_name
 

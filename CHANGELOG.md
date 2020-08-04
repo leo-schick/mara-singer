@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.4.0
+
+- implement log handling for singer taps
+- update dependencies for BigQuery requirement
+
 ## 0.3.3
 
 - add support DATE data type in create-table from jsonschema function
