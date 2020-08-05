@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.2
+
+- fix lag reading sinter-tap log from stderr [#3](https://github.com/hz-lschick/mara-singer/issues/3)
+
 ## 0.4.1
 
 - add SingerConfig/SingerTapState classes

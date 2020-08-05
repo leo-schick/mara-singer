@@ -1,10 +1,12 @@
 """Command execution in bash shells"""
 
 import time
+import threading
 
 from mara_pipelines import config
 from mara_pipelines.logging import logger
 
+from .logging import SingerTapReadLogThread
 
 def singer_run_shell_command(command: str, log_command: bool = True):
     """
@@ -37,60 +39,24 @@ def singer_run_shell_command(command: str, log_command: bool = True):
     # subprocess.Popen(..) (and not custom streams without a file handle).
     # So in order to see be able to log the output in real-time, we have to
     # query the output steams of the process from to separate threads
-    class __ListenerThread(threading.Thread):
-        def __init__(self, group=None, target=None, name=None, verbose=None):
-            threading.Thread.__init__(self, group=group, target=target, name=name)#,
-                                      #verbose=verbose)
+    def read_process_stdout():
+        for line in process.stdout:
+            output_lines.append(line)
+            logger.log(line, format=logger.Format.VERBATIM)
 
-            self.__has_error = False
-
-        @property
-        def has_error(self):
-            return self.__has_error
-
-        def run(self):
-            self.__has_error = False
-
-            for line in process.stdout:
-                output_lines.append(line)
-                logger.log(line, format=logger.Format.VERBATIM)
-
-            for line in process.stderr:
-                pos = line.find(' ')
-                if pos == -1:
-                    loglevel = 'NOTSET'
-                    logmsg = line
-                else:
-                    loglevel = line[:pos]
-                    logmsg = line[(pos+1):]
-
-                if loglevel == 'INFO':
-                    if logmsg.startswith('METRIC:'):
-                        # This data could be used for showing execution statistics; see also https://github.com/singer-io/getting-started/blob/96a0f7addec517fcf5155284744c648fe4f16902/docs/SYNC_MODE.md#metric-messages
-                        logger.log(logmsg, format=logger.Format.ITALICS)
-                    else:
-                        logger.log(logmsg, format=logger.Format.VERBATIM)
-
-                elif loglevel in ['NOTSET','WARNING']:
-                    logger.log(logmsg, format=logger.Format.VERBATIM)
-                elif loglevel == 'DEBUG':
-                    pass # DEBUG messages are ignored
-                elif loglevel in ['ERROR','CRITICAL']:
-                    self.__has_error = True
-                    logger.log(logmsg, format=logger.Format.VERBATIM, is_error=True)
-
-            return
-
-    read_output_thread = __ListenerThread()
-    read_output_thread.start()
+    read_stdout_thread = threading.Thread(target=read_process_stdout)
+    read_stdout_thread.start()
+    read_singertaplog_thread = SingerTapReadLogThread(process=process)
+    read_singertaplog_thread.start()
 
     # wait until the process finishes
     while process.poll() is None:
         time.sleep(0.005)
 
-    read_output_thread.join()
+    read_stdout_thread.join()
+    read_singertaplog_thread.join()
 
-    if read_output_thread.has_error:
+    if read_singertaplog_thread.has_error:
         logger.log('Singer tap error occured', is_error=True, format=logger.Format.ITALICS)
         return False
 
