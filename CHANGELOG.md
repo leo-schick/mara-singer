@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.1
+
+- add SingerConfig/SingerTapState classes
+
 ## 0.4.0
 
 - implement log handling for singer taps
