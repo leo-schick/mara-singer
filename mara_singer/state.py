@@ -21,7 +21,11 @@ class SingerTapState:
         if not self._state:
             if os.path.isfile(self.state_file_path()):
                 with open(self.state_file_path(),'r') as state_file:
-                    self._state = json.load(state_file)
+                    data = state_file.read()
+                    if len(data) == 0: # empty file
+                        self._state = {}
+                    else:
+                        self._state = json.loads(data)
             else:
                 self._state = {} # no config file exists -> create an empty config
 

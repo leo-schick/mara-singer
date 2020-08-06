@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.4.3
+
+- fix do not break when state file is empty (+ add unit test for class SingerTapState)
+
 ## 0.4.2
 
 - fix lag reading sinter-tap log from stderr [#3](https://github.com/hz-lschick/mara-singer/issues/3)

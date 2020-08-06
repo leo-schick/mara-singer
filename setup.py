@@ -23,7 +23,7 @@ setup(
         'mara-pipelines>=3.0.0'],
 
     extras_require={
-        'test': ['pytest', 'pytest_click'],
+        'test': ['pytest', 'pytest_click', 'mara-app>=2.2.0'],
     },
 
     packages=find_packages(),
