@@ -167,6 +167,22 @@ elif [[ $1 == 'list' ]]; then
 
 	[ -d .singer-venv/ ] &&	find .singer-venv/$SEARCH_STRING -maxdepth 0 -mindepth 0 -type d -printf '%f\n'
 
+elif [[ $1 == 'freeze' ]]; then
+
+	CURRENT_ENV="$VIRTUAL_ENV"
+
+	bash ./$0 list |
+		while IFS= read -r line
+		do
+			PACKAGE_VENV="$CURRENT_ENV/../.singer-venv/$line"
+			source $PACKAGE_VENV/bin/activate
+			pip3 freeze | grep $line | head -1
+		done
+
+	if [[ $CURRENT_ENV == '' ]]; then
+		source $CURRENT_ENV/bin/activate
+	fi
+
 else
 	echo 'singer-cli.sh 0.3.0 [install|uninstall|list] [pip-package-name]'
 	echo 'Usage: singer-cli.sh [command] [args]'
@@ -175,9 +191,10 @@ else
 	echo 'tap/target pip packages'
 	echo ''
 	echo 'Commands:'
-	echo '  install [package_name] - install a tap/target pip package in a isoladted environment'
-	echo '  uninstall [package_name] - uninstall a tap/target pip package'
-	echo '  list (optional_search_string) - list the installed packages'
+	echo '  install [package_name]        - Install a tap/target pip package in a isoladted environment'
+	echo '  uninstall [package_name]      - Uninstall a tap/target pip package'
+	echo '  list (optional_search_string) - List installed packages.'
+	echo '  freeze                        - Output installed packages in requirements format.'
 	echo ''
 	echo 'Sample usage:'
 	echo '  # install packages'
