@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.1
+
+- fix execute permission for .scripts/singer-cli.sh
+
 ## 0.5.0
 
 - add functions for sync. and swipe-up of old transactions

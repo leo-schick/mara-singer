@@ -7,7 +7,7 @@ def get_long_description():
 
 setup(
     name='mara-singer',
-    version='0.5.0',
+    version='0.5.1',
 
     description='Singer implementation for mara',
 
