@@ -5,7 +5,7 @@ setup-mara-singer:
 
 # copy scripts from mara-singer package to project code
 .copy-mara-singer-scripts:
-	rsync --archive --recursive --itemize-changes  --delete packages/mara-app/.scripts/ .scripts/mara-app/
+	rsync --archive --recursive --itemize-changes  --delete packages/mara-singer/.scripts/ .scripts/mara-singer/
 
 # install singer packages from requirements.singer.txt
 install-singer-packages:
