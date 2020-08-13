@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.2
+
+- fix .scripts/install.mk script
+
 ## 0.5.1
 
 - fix execute permission for .scripts/singer-cli.sh
