@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.0
+
+- add functions for sync. and swipe-up of old transactions
+- add replication_method and replication_key to SingerStream
+
 ## 0.4.3
 
 - fix do not break when state file is empty (+ add unit test for class SingerTapState)
