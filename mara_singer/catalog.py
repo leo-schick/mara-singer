@@ -1,12 +1,19 @@
 import os
 import json
 import pathlib
+import enum
 import singer.catalog
 import singer.metadata
 
 from mara_db import dbs
 
 from . import config
+
+class ReplicationMethod(enum.EnumMeta):
+    """Different replication methods for a stream"""
+    FULL_TABLE = "FULL_TABLE"
+    INCREMENTAL = "INCREMENTAL"
+    LOG_BASED = "LOG_BASED"
 
 class SingerCatalog:
     def __init__(self, catalog_file_name: str) -> None:
@@ -109,3 +116,27 @@ class SingerStream:
             schema_dict = self.stream.schema.to_dict()
             schema_dict['selected'] = True
             self.stream.schema = singer.schema.Schema.from_dict(schema_dict)
+
+    @property
+    def replication_method(self) -> str:
+        """Either FULL_TABLE, INCREMENTAL, or LOG_BASED. The replication method to use for a stream."""
+
+        # check for deprecated way of saving the replication_method
+        replication_method = self.stream.to_dict().get('replication_method')
+        if replication_method: 
+            return replication_method
+
+        mdata = singer.metadata.to_map(self.stream.metadata)
+        return singer.metadata.get(mdata, (), 'forced-replication-method') or singer.metadata.get(mdata, (), 'replication-method')
+
+    @property
+    def replication_key(self) -> str:
+        """The name of a property in the source to use as a "bookmark". For example, this will often be an "updated-at" field or an auto-incrementing primary key (requires replication-method)."""
+
+        # check for deprecated way of saving the replication_key
+        replication_key = self.stream.to_dict().get('replication_key')
+        if replication_key: 
+            return replication_key
+
+        mdata = singer.metadata.to_map(self.stream.metadata)
+        return singer.metadata.get(mdata, (), 'replication-key')
