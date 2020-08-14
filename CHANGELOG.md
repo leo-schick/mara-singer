@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.0
+
+- add SingerTapToDB command
+
 ## 0.5.2
 
 - fix .scripts/install.mk script
