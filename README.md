@@ -2,6 +2,8 @@
 
 This package contains a mara implementation for [singer.io](https://www.singer.io/).
 
+:warning: This package is under development, breaking changes might be done during each minor version iteration.
+
 &nbsp;
 
 ## Installation
