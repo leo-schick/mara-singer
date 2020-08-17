@@ -86,8 +86,7 @@ rsync --archive --recursive --itemize-changes  --delete packages/mara-singer/.sc
 echo '/.singer
 /app/singer/config
 /app/singer/catalog/*.tmp
-/app/singer/state
-!.gitkepp' >> .gitignore
+/app/singer/state' >> .gitignore
 echo '
 # singer package install
 include .scripts/mara-singer/install.mk' >> Makefile
@@ -126,6 +125,8 @@ To finalize the installation, push the changes to git:
 git add *
 git add .gitignore
 git add .scripts/mara-singer/
+git add -f ./app/singer/config/.gitkeep
+git add -f ./app/singer/state/.gitkeep
 git commit -m 'install mara-singer module'
 ```
 
