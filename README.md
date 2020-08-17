@@ -56,6 +56,78 @@ pipeline.add(
 )
 ```
 
+&nbsp;
+
+## Install guide
+
+*Note:* This install guide is based on a [Mara Example Project 1](https://github.com/mara/mara-example-project-1). In case you use another project, you might need to make some additional adjustments.
+
+### Step 1 -- add/ensure requirements
+
+Edit the requirements.txt:
+* make sure that mara-db uses 4.7.0 or higher
+* add the line `-e git+https://github.com/hz-lschick/mara-singer.git@0.7.0#egg=mara-singer` to the file
+
+### Step 2 -- Install module
+
+Call the following shell commands to install the mara-singer package:
+```shell
+make update-packages
+mkdir ./app/singer
+mkdir ./app/singer/catalog
+mkdir ./app/singer/config
+mkdir ./app/singer/state
+touch ./app/singer/catalog/.gitkeep
+touch ./app/singer/config/.gitkeep
+touch ./app/singer/state/.gitkeep
+rsync --archive --recursive --itemize-changes  --delete packages/mara-singer/.scripts/ .scripts/mara-singer/
+echo '/.singer
+/app/singer/config
+/app/singer/catalog/*.tmp
+/app/singer/stats
+!.gitkepp' >> .gitignore
+echo '
+# singer package install
+include .scripts/mara-singer/install.mk' >> Makefile
+```
+
+### Step 3 -- Install singer packages
+
+Add a new file `singer-requirements.txt` with the following content:
+
+```requirements.txt
+# taps
+
+# ... here you can add the taps you want to sue
+
+# targets
+# default targets
+target-jsonl==0.1.2
+-e git+https://github.com/datamill-co/target-postgres.git@v0.2.4#egg=target-postgres
+
+# Optional for manual catalog management
+#-e git+https://github.com/chrisgoddard/singer-discover.git#egg=singer-discover
+```
+
+Add the taps you want to use to the `singer-requirements.txt` file.
+Then call:
+
+```shell
+make install-singer-packages
+```
+
+### Step 4 -- Push your changes to git
+
+To finalize the installation, push the changes to git:
+
+```shell
+git add *
+git add .gitignore
+git add .scripts/mara-singer/
+git commit -m 'install mara-singer module'
+```
+
+Congratulation :tada: you have now completed the mara-singer package installation!
 
 &nbsp;
 
