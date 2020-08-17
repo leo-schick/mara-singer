@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.7.0
+
+- refactoring; breaking changes:
+    - base path is now `/app/singer/`, not `/data/singer/` anymore
+    - rename `requirements.singer.txt` to `singer-requirements.txt`
+    - rename singer venv path from `/.singer-venv` to `/.singer`
+
 ## 0.6.0
 
 - add SingerTapToDB command

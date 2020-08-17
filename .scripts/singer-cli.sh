@@ -105,7 +105,7 @@ if [[ $1 == 'install' ]]; then
 			exit 1
 		fi
 
-		PACKAGE_VENV="$CURRENT_ENV/../.singer-venv/$PACKAGE_NAME"
+		PACKAGE_VENV="$CURRENT_ENV/../.singer/$PACKAGE_NAME"
 
 		python -m venv "$PACKAGE_VENV"
 		source "$PACKAGE_VENV/bin/activate"
@@ -117,7 +117,7 @@ if [[ $1 == 'install' ]]; then
 
 		# create symbolic link
 
-		SYMBOLIC_LINK_TARGET="../../.singer-venv/$PACKAGE_NAME/bin/$PACKAGE_NAME"
+		SYMBOLIC_LINK_TARGET="../../.singer/$PACKAGE_NAME/bin/$PACKAGE_NAME"
 		SYMBOLIC_LINK_NAME="$CURRENT_ENV/bin/$PACKAGE_NAME"
 		if [ -L "$SYMBOLIC_LINK_NAME" ]; then
 			rm -f "$SYMBOLIC_LINK_NAME"
@@ -149,7 +149,7 @@ elif [[ $1 == 'uninstall' ]]; then
 		exit 1
 	fi
 
-	PACKAGE_VENV="$CURRENT_ENV/../.singer-venv/$PACKAGE_NAME"
+	PACKAGE_VENV="$CURRENT_ENV/../.singer/$PACKAGE_NAME"
 
 	rm -f "$CURRENT_ENV/bin/$PACKAGE_NAME"
 	rm -rf "$PACKAGE_VENV"
@@ -165,7 +165,7 @@ elif [[ $1 == 'list' ]]; then
 		SEARCH_STRING="$2"
 	fi
 
-	[ -d .singer-venv/ ] &&	find .singer-venv/$SEARCH_STRING -maxdepth 0 -mindepth 0 -type d -printf '%f\n'
+	[ -d .singer/ ] &&	find .singer/$SEARCH_STRING -maxdepth 0 -mindepth 0 -type d -printf '%f\n'
 
 elif [[ $1 == 'freeze' ]]; then
 
@@ -174,7 +174,7 @@ elif [[ $1 == 'freeze' ]]; then
 	bash ./$0 list |
 		while IFS= read -r line
 		do
-			PACKAGE_VENV="$CURRENT_ENV/../.singer-venv/$line"
+			PACKAGE_VENV="$CURRENT_ENV/../.singer/$line"
 			source $PACKAGE_VENV/bin/activate
 			pip3 freeze | grep $line | head -1
 		done
