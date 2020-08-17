@@ -84,7 +84,7 @@ rsync --archive --recursive --itemize-changes  --delete packages/mara-singer/.sc
 echo '/.singer
 /app/singer/config
 /app/singer/catalog/*.tmp
-/app/singer/stats
+/app/singer/state
 !.gitkepp' >> .gitignore
 echo '
 # singer package install
