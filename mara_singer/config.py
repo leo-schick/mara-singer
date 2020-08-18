@@ -6,15 +6,15 @@ def data_dir() -> str:
 
 def config_dir():
     """The directory where persistent config files are stored"""
-    return pathlib.Path('./singer/config')
+    return pathlib.Path('./app/singer/config')
 
 def state_dir():
     """The directory where state files are stored"""
-    return pathlib.Path('./singer/state')
+    return pathlib.Path('./app/singer/state')
 
 def catalog_dir():
     """The directory where state files are stored"""
-    return pathlib.Path('./singer/catalog')
+    return pathlib.Path('./app/singer/catalog')
 
 
 class SingerConfig:
