@@ -13,6 +13,7 @@ from .. import config
 class _SingerTapCommand(Command):
     """A base command class for interacting with a singer tab"""
     def __init__(self, tap_name: str,
+        config: dict = None,
         # optional args for manual config/catalog/state file handling; NOTE might be removed some day!
         config_file_name: str = None, catalog_file_name: str = None, state_file_name: str = None,
 
@@ -21,11 +22,35 @@ class _SingerTapCommand(Command):
         use_legacy_properties_arg: bool = False) -> None:
         #assert all(v is None for v in [config_file_name]), f"unimplemented parameter for _SingerTapCommand"
         self.tap_name = tap_name
+        self._tap_config = config
         self.config_file_name = config_file_name if config_file_name else f'{tap_name}.json'
         self.state_file_name = state_file_name
         self.pass_state_file = pass_state_file
         self.catalog_file_name = catalog_file_name
         self.use_legacy_properties_arg = use_legacy_properties_arg
+
+    def _patch_tap_config(self, config: dict):
+        """A method which is called before writing the patched config"""
+        pass
+
+    @property
+    def tap_config(self) -> dict:
+        """The tap config including the patch from the 'config' arg."""
+        tap_config = None
+        if os.path.exists(self.config_file_path()):
+            with open(self.config_file_path(),'r') as config_file:
+                # TODO: catch config load exceptions here!
+                tap_config = json.load(config_file)
+
+        if self._tap_config:
+            if tap_config is None:
+                tap_config = self._tap_config
+            else:
+                tap_config.update(self._tap_config)
+
+        self._patch_tap_config(tap_config)
+
+        return tap_config
 
     def run(self) -> bool:
         """
@@ -37,7 +62,23 @@ class _SingerTapCommand(Command):
         from .. import shell
         shell_command = self.shell_command()
 
-        return shell.singer_run_shell_command(shell_command)
+        # create temp tap config file
+        if self._tap_config:
+            tmp_tap_config_path = pathlib.Path(config.config_dir()) / f'{self.config_file_name}.tmp'
+            tap_config = self.tap_config
+            with open(tmp_tap_config_path, 'w') as tap_config_file:
+                json.dump(tap_config, tap_config_file)
+        elif not os.path.exists(self.config_file_path()):
+            log(message=f"The tap config '{self.config_file_path()}' does not exist.", is_error=True)
+            return False
+
+        try:
+            result = shell.singer_run_shell_command(shell_command)
+        finally:
+            if self._tap_config:
+                os.remove(tmp_tap_config_path)
+
+        return result
 
     def config_file_path(self) -> pathlib.Path:
         return pathlib.Path(config.config_dir()) / self.config_file_name
@@ -49,12 +90,16 @@ class _SingerTapCommand(Command):
         return pathlib.Path(config.catalog_dir()) / self.catalog_file_name
 
     def shell_command(self):
+        config_file_path = self.config_file_path()
+        if self._tap_config:
+            config_file_path = pathlib.Path(config.config_dir()) / f'{self.config_file_name}.tmp'
+
         state_file_path = None
         if self.state_file_name and os.path.exists(self.state_file_path()) and os.stat(self.state_file_path()).st_size != 0:
             state_file_path = self.state_file_path()
 
         command = (f'{self.tap_name}'
-                + f' --config {self.config_file_path()}'
+                + f' --config {config_file_path}'
                 + (f' --state {state_file_path}' if state_file_path and self.pass_state_file else ''))
 
         if self.use_legacy_properties_arg:
@@ -65,7 +110,8 @@ class _SingerTapCommand(Command):
         return command
 
     def html_doc_items(self) -> [(str, str)]:
-        config = self.config_file_path().read_text().strip('\n') if self.config_file_path().exists() else '-- file not found'
+        config_file_content = self.config_file_path().read_text().strip('\n') if self.config_file_path().exists() else '-- file not found'
+        config_final = json.dumps(self.tap_config) if self.config_file_path().exists() or self._tap_config else '-- file not found'
         state = self.state_file_path().read_text().strip('\n') if self.state_file_path().exists() else '-- file not found'
 
         doc = [
@@ -74,7 +120,10 @@ class _SingerTapCommand(Command):
 
         if self.config_file_name:
         #    doc.append(('config file name', _.i[self.config_file_name]))
-            doc.append((_.i['config file content'], html.highlight_syntax(config, 'json')))
+            doc.append((_.i['config file content'], html.highlight_syntax(config_file_content, 'json')))
+        if self._tap_config:
+            doc.append((_.i['config'], html.highlight_syntax(json.dumps(self._tap_config), 'json')))
+            doc.append((_.i['config final'], html.highlight_syntax(config_final, 'json')))
 
         if self.state_file_name:
         #    doc.append(('state file name', _.i[self.state_file_name]))
@@ -90,10 +139,11 @@ class _SingerTapReadCommand(_SingerTapCommand):
     """A base command for interacting with a singer tab to read data"""
 
     def __init__(self, tap_name: str, stream_selection: t.Union[t.List[str], t.Dict[str, t.List[str]]] = None,
-        config_file_name: str = None, catalog_file_name: str = None, state_file_name: str = None, use_state_file: bool = True, pass_state_file: bool = False,
+        config: dict = None, config_file_name: str = None,
+        catalog_file_name: str = None, state_file_name: str = None, use_state_file: bool = True, pass_state_file: bool = False,
         use_legacy_properties_arg: bool = False) -> None:
         super().__init__(tap_name,
-            config_file_name=config_file_name,
+            config=config, config_file_name=config_file_name,
             catalog_file_name=catalog_file_name if catalog_file_name else f'{tap_name}.json',
             state_file_name=state_file_name if state_file_name else (f'{tap_name}.json' if use_state_file else None),
             pass_state_file=pass_state_file, use_legacy_properties_arg=use_legacy_properties_arg)
@@ -196,6 +246,7 @@ class SingerTapDiscover(_SingerTapCommand):
 
         Args:
             tap_name: The tap command name (e.g. tap-exchangeratesapi)
+            config: (default: None) A dict which is used to path the config file (when it exists) or create a temp config file (when it does not exists)
             config_file_name: (default: {tap_name}.json) The tap config file name
             catalog_file_name: (default: {tap_name}.json) The catalog file name
         """

@@ -11,6 +11,7 @@ class SingerTapToDB(_SingerTapReadCommand):
         tap_name: str, stream_selection: t.Union[t.List[str], t.Dict[str, t.List[str]]],
         target_schema: str,
         target_db_alias: str = None,
+        config: dict = None,
 
         # optional args for manual config/catalog/state file handling; NOTE might be removed some day!
         config_file_name: str = None, catalog_file_name: str = None, state_file_name: str = None,
@@ -27,7 +28,7 @@ class SingerTapToDB(_SingerTapReadCommand):
             stream_selection: The selected streams, when the tap supports several streams. Can be given as stream array or as dict with the properties as value array.
             target_schema: The target database schema
             target_db_alias: The target database alias
-            destination_dir: (default: '') The path to which the files will be written.
+            config: (default: None) A dict which is used to path the tap config file (when it exists) or create a temp config file (when it does not exists)
             config_file_name: (default: {tap_name}.json) The tap config file name
             catalog_file_name: (default: {tap_name}.json) The catalog file name
             state_file_name: (default: {tap_name}.json) The state file name
@@ -36,7 +37,7 @@ class SingerTapToDB(_SingerTapReadCommand):
             use_legacy_properties_arg: (default: False) Some old taps do not support the --catalog parameter but still require the deprecated --properties parameter
         """
         super().__init__(tap_name,
-            config_file_name=config_file_name,
+            config=config, config_file_name=config_file_name,
             stream_selection=stream_selection,
             catalog_file_name=catalog_file_name if catalog_file_name else f'{tap_name}.json',
             state_file_name=state_file_name if state_file_name else (f'{tap_name}.json' if use_state_file else None),

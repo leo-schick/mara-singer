@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.1
+
+- add 'config' arg. to commands, making it possible to path the config file
+
 ## 0.7.0
 
 - refactoring; breaking changes:
