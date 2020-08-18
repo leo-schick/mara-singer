@@ -66,7 +66,7 @@ def _jsonschema_property_type_to_db_type(db: object, type: str, format: str = No
     raise NotImplementedError(f'Please implement _jsonschema_property_type_map for type "{db.__class__.__name__}"')
 
 @_jsonschema_property_type_to_db_type.register(dbs.PostgreSQLDB)
-def __(db: dbs.PostgreSQLDB, type, format):
+def __(db: dbs.PostgreSQLDB, type, format = None):
     if type == 'string':
         if format == 'date':
             return 'DATE'
@@ -81,7 +81,7 @@ def __(db: dbs.PostgreSQLDB, type, format):
     raise Exception(f'Could not map type \'{type}\' with format \'{format}\'')
 
 @_jsonschema_property_type_to_db_type.register(dbs.BigQueryDB)
-def __(db: dbs.BigQueryDB, type, format):
+def __(db: dbs.BigQueryDB, type, format = None):
     if type == 'string':
         if format == 'date':
             return 'DATE'
