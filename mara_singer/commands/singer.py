@@ -42,13 +42,13 @@ class _SingerTapCommand(Command):
                 # TODO: catch config load exceptions here!
                 tap_config = json.load(config_file)
 
+        self._patch_tap_config(tap_config)
+
         if self._tap_config:
             if tap_config is None:
                 tap_config = self._tap_config
             else:
                 tap_config.update(self._tap_config)
-
-        self._patch_tap_config(tap_config)
 
         return tap_config
 
