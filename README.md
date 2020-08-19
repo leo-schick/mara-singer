@@ -60,9 +60,9 @@ pipeline.add(
 
 &nbsp;
 
-## Install guide
+## Quick install guide
 
-*Note:* This install guide is based on a [Mara Example Project 1](https://github.com/mara/mara-example-project-1). In case you use another project, you might need to make some additional adjustments.
+*Note:* This install guide is based on a [Mara Example Project 1](https://github.com/mara/mara-example-project-1).
 
 ### Step 1 -- add/ensure requirements
 
@@ -87,10 +87,19 @@ echo '/.singer
 /app/singer/config
 /app/singer/catalog/*.tmp
 /app/singer/state' >> .gitignore
-echo '
-# singer package install
-include .scripts/mara-singer/install.mk' >> Makefile
 ```
+
+Open your make file and do the following adjustments:
+
+1. add `make setup-singer` to the `all` target
+2. add the following module-specific code:
+```Makefile
+# singer setup & singer package manager
+include .scripts/mara-singer/singer.mk
+```
+3. add `.cleanup-singer` to the `cleanup` target
+
+
 
 ### Step 3 -- Install singer packages
 
