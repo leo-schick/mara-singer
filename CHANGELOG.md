@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.7.2
+
+- call _patch_tap_config before updating parameter 'config' in _SingerTapCommand
+- fixes to install script, rename from install.mk to singer.mk
+
 ## 0.7.1
 
 - add 'config' arg. to commands, making it possible to path the config file
