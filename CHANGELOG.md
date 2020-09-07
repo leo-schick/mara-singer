@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.7.3
+
+- add cli command `mara_singer.discover --tap-name TEXT`
+- fix [#5](https://github.com/hz-lschick/mara-singer/issues/5)
+
 ## 0.7.2
 
 - call _patch_tap_config before updating parameter 'config' in _SingerTapCommand
