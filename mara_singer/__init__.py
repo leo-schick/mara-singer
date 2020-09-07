@@ -19,7 +19,8 @@ def MARA_ACL_RESOURCES():
 
 
 def MARA_CLICK_COMMANDS():
-    return []
+    from . import cli
+    return [cli.discover]
 
 
 def MARA_NAVIGATION_ENTRIES():
