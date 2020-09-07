@@ -16,6 +16,8 @@ def catalog_dir():
     """The directory where state files are stored"""
     return pathlib.Path('./app/singer/catalog')
 
+import os
+import json
 
 class SingerConfig:
     def __init__(self, command_name: str) -> None:
@@ -30,10 +32,9 @@ class SingerConfig:
 
     def _load_config(self):
         if not self._config:
-            import os
-            if os.path.isfile(self.config_file_path()):
-                import json
-                with open(self.config_file_path(),'r') as config_file:
+            file_path = self.config_file_path()
+            if os.path.isfile(file_path) and os.path.getsize(file_path) > 0:
+                with open(file_path,'r') as config_file:
                     self._config = json.load(config_file)
             else:
                 self._config = {} # no config file exists -> create an empty config
@@ -65,6 +66,5 @@ class SingerConfig:
         if not self._config:
             return # nothing loaded --> nothing changed --> no need to save
 
-        import json
         with open(self.config_file_path(),'w') as config_file:
             json.dump(self._config, config_file)

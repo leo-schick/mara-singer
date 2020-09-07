@@ -28,8 +28,9 @@ class SingerCatalog:
 
     def _load_catalog(self) -> singer.catalog.Catalog:
         if not self._catalog:
-            if os.path.isfile(self.catalog_file_path()):
-                self._catalog = singer.catalog.Catalog.load(self.catalog_file_path())
+            file_path = self.catalog_file_path()
+            if os.path.isfile(file_path) and os.path.getsize(file_path) > 0:
+                self._catalog = singer.catalog.Catalog.load(file_path)
             else:
                 self._catalog = singer.catalog.Catalog(streams=[])
         return self._catalog
