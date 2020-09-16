@@ -106,12 +106,11 @@ if [[ $1 == 'install' ]]; then
 		else
 			# if venv does not exists, create venv
 			python -m venv "$PACKAGE_VENV"
-			source "$PACKAGE_VENV/bin/activate"
-			pip install wheel
 			RC=$?; [ $RC -ne 0 ] && exit $RC
-			pip install $PIP_INSTALL_PARAM
+			$PACKAGE_VENV/bin/pip install wheel
 			RC=$?; [ $RC -ne 0 ] && exit $RC
-			source "$CURRENT_ENV/bin/activate"
+			$PACKAGE_VENV/bin/pip install $PIP_INSTALL_PARAM
+			RC=$?; [ $RC -ne 0 ] && exit $RC
 
 			# create symbolic link
 
