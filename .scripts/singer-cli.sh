@@ -175,17 +175,12 @@ elif [[ $1 == 'freeze' ]]; then
 		while IFS= read -r line
 		do
 			PACKAGE_VENV="$CURRENT_ENV/../.singer/$line"
-			source $PACKAGE_VENV/bin/activate
-			pip3 freeze | grep $line | head -1
+			$PACKAGE_VENV/bin/pip freeze | grep $line | head -1
 		done
 
-	if [[ $CURRENT_ENV == '' ]]; then
-		source $CURRENT_ENV/bin/activate
-	fi
-
 else
-	echo 'singer-cli.sh 0.3.0 [install|uninstall|list] [pip-package-name]'
-	echo 'Usage: singer-cli.sh [command] [args]'
+	echo 'singer-cli.sh 0.3.1'
+	echo 'Usage: singer-cli.sh <command> [args]'
 	echo ''
 	echo 'singer-cli.sh is a simple package manager script for singer.io'
 	echo 'tap/target pip packages'
