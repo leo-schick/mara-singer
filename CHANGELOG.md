@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.7.4
+
+- increase `singer-cli.sh install` performance speed by 90%
+- do not use `source <venv>/bin/activate` in `singer-cli.sh` anymore
+
 ## 0.7.3
 
 - add cli command `mara_singer.discover --tap-name TEXT`
