@@ -51,13 +51,6 @@ if [[ $1 == 'install' ]]; then
 						PACKAGE_NAME=$(cut -d '=' -f1 <<< "$PACKAGE_NAME")
 					fi
 
-					# uninstall if it is already installed (we don't have a version handling yet!)
-					if bash ./$0 list | grep "$PACKAGE_NAME" > /dev/null; then
-						echo -e "${PALETTE_INFO}singer-cli.sh uninstall $PACKAGE_NAME${PALETTE_RESET}"
-						bash ./$0 uninstall "$PACKAGE_NAME"
-						RC=$?; [ $RC -ne 0 ] && exit $RC
-					fi
-
 					# run install
 					echo -e "${PALETTE_INFO}singer-cli.sh install \"$line\"${PALETTE_RESET}"
 					bash ./$0 install "$line"
@@ -107,24 +100,30 @@ if [[ $1 == 'install' ]]; then
 
 		PACKAGE_VENV="$CURRENT_ENV/../.singer/$PACKAGE_NAME"
 
-		python -m venv "$PACKAGE_VENV"
-		source "$PACKAGE_VENV/bin/activate"
-		pip install wheel
-		RC=$?; [ $RC -ne 0 ] && exit $RC
-		pip install $PIP_INSTALL_PARAM
-		RC=$?; [ $RC -ne 0 ] && exit $RC
-		source "$CURRENT_ENV/bin/activate"
+		if [ -d $PACKAGE_VENV/ ]; then
+			# if venv exists, call pip from venv
+			$PACKAGE_VENV/bin/pip install $PIP_INSTALL_PARAM
+		else
+			# if venv does not exists, create venv
+			python -m venv "$PACKAGE_VENV"
+			source "$PACKAGE_VENV/bin/activate"
+			pip install wheel
+			RC=$?; [ $RC -ne 0 ] && exit $RC
+			pip install $PIP_INSTALL_PARAM
+			RC=$?; [ $RC -ne 0 ] && exit $RC
+			source "$CURRENT_ENV/bin/activate"
 
-		# create symbolic link
+			# create symbolic link
 
-		SYMBOLIC_LINK_TARGET="../../.singer/$PACKAGE_NAME/bin/$PACKAGE_NAME"
-		SYMBOLIC_LINK_NAME="$CURRENT_ENV/bin/$PACKAGE_NAME"
-		if [ -L "$SYMBOLIC_LINK_NAME" ]; then
-			rm -f "$SYMBOLIC_LINK_NAME"
+			SYMBOLIC_LINK_TARGET="../../.singer/$PACKAGE_NAME/bin/$PACKAGE_NAME"
+			SYMBOLIC_LINK_NAME="$CURRENT_ENV/bin/$PACKAGE_NAME"
+			if [ -L "$SYMBOLIC_LINK_NAME" ]; then
+				rm -f "$SYMBOLIC_LINK_NAME"
+			fi
+
+			ln -s "$SYMBOLIC_LINK_TARGET" "$SYMBOLIC_LINK_NAME"
+			RC=$?; [ $RC -ne 0 ] && exit $RC
 		fi
-
-		ln -s "$SYMBOLIC_LINK_TARGET" "$SYMBOLIC_LINK_NAME"
-		RC=$?; [ $RC -ne 0 ] && exit $RC
 
 	fi
 
@@ -179,7 +178,7 @@ elif [[ $1 == 'freeze' ]]; then
 		done
 
 else
-	echo 'singer-cli.sh 0.3.1'
+	echo 'singer-cli.sh 0.3.2'
 	echo 'Usage: singer-cli.sh <command> [args]'
 	echo ''
 	echo 'singer-cli.sh is a simple package manager script for singer.io'
