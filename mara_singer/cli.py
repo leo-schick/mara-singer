@@ -3,9 +3,12 @@
 import sys
 import click
 
-from .pipeline import pipeline as singer_pipeline
+from mara_app.monkey_patch import patch
 from mara_pipelines import pipelines
 import mara_pipelines.ui.cli
+
+from .pipeline import _internal_root_pipeline
+
 
 @click.command()
 @click.option('--tap-name', required=True,
@@ -15,10 +18,12 @@ import mara_pipelines.ui.cli
 def discover(tap_name, disable_colors: bool = False):
     """Run discover for a singer tap"""
 
+    patch(mara_pipelines.config.root_pipeline)(lambda: _internal_root_pipeline())
+
     # the pipeline to run
     pipeline, found = pipelines.find_node(['_singer',tap_name.replace('-','_')])
     if not found:
-        print(f'Could not find pipeline. You have to add mara_singer.pipeline.pipeline to your root pipeline and add {tap_name} to config mara_singer.config.tap_names to be able to use this command', file=sys.stderr)
+        print(f'Could not find pipeline. You have to add {tap_name} to config mara_singer.config.tap_names to be able to use this command', file=sys.stderr)
         sys.exit(-1)
     if not isinstance(pipeline, pipelines.Pipeline):
         print(f'Internal error: Note is not a pipeline, but a {pipeline.__class__.__name__}', file=sys.stderr)

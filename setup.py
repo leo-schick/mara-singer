@@ -7,7 +7,7 @@ def get_long_description():
 
 setup(
     name='mara-singer',
-    version='0.7.4',
+    version='0.7.5',
 
     description='Singer implementation for mara',
 
@@ -18,6 +18,7 @@ setup(
 
     install_requires=[
         'singer-python==5.9.0',
+        'mara-app>=2.0.2',
         'mara-db>=4.7.0',
         'mara-page>=1.5.1',
         'mara-pipelines>=3.0.0'],

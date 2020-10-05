@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.5 (2020-10-05)
+
+- using monkey-patch for internal pipeline (removing the need to add the internal pipeline to your root pipeline)
+
 ## 0.7.4
 
 - increase `singer-cli.sh install` performance speed by 90%
