@@ -17,7 +17,7 @@ setup(
     url = 'https://github.com/hz-lschick/mara-singer',
 
     install_requires=[
-        'singer-python==5.9.0',
+        'singer-python>=5.9.0',
         'mara-app>=2.0.2',
         'mara-db>=4.7.0',
         'mara-page>=1.5.1',
