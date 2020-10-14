@@ -26,7 +26,7 @@ if [[ $1 == 'install' ]]; then
 
 		if [[ $3 == '' ]] || [[ -f "$3" ]]; then
 
-			while IFS= read -r line
+			cat $3 | sed "s/\r$//" | while IFS= read -r line
 			do
 				# cut comments from the line (only when not is git+ command)
 				if ! [[ $line = '-e git+'* ]]; then
@@ -56,7 +56,7 @@ if [[ $1 == 'install' ]]; then
 					bash ./$0 install "$line"
 					RC=$?; [ $RC -ne 0 ] && exit $RC
 				fi
-			done < $3
+			done
 
 		else
 			echo -e "${PALETTE_ERROR}requirements file '$3' not given or does not exist${PALETTE_RESET}"
