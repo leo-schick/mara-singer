@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.7.6 (2020-10-19)
+
+- use loose version requirement for singer-python<br/>
+  I recomment using a loose version requirement version of singer-python, in
+  your requirements.txt file e.g. [hz-lschick/singer-python](https://github.com/hz-lschick/singer-python)
+- fix singer-cli.sh install working with CRLF line-ending files
+
 ## 0.7.5 (2020-10-05)
 
 - using monkey-patch for internal pipeline (removing the need to add the internal pipeline to your root pipeline)
