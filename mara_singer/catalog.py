@@ -8,6 +8,7 @@ import singer.metadata
 from mara_db import dbs
 
 from . import config
+from .schema import Table
 
 class ReplicationMethod(enum.EnumMeta):
     """Different replication methods for a stream"""
@@ -42,7 +43,7 @@ class SingerCatalog:
             catalog = self._load_catalog()
 
             for stream in catalog.streams:
-                self._streams[stream.tap_stream_id] = SingerStream(stream)
+                self._streams[stream.tap_stream_id] = SingerStream(name=stream.tap_stream_id, stream=stream)
 
         return self._streams
 
@@ -68,13 +69,18 @@ class SingerCatalog:
 
 
 class SingerStream:
-    def __init__(self, stream: singer.catalog.CatalogEntry) -> None:
+    def __init__(self, name: str, stream: singer.catalog.CatalogEntry) -> None:
+        self.name = name
         self.stream = stream
 
     @property
     def key_properties(self) -> [str]:
         """The key properties of the stream"""
-        return self.stream.key_properties
+        key_properties = self.stream.key_properties
+        if not key_properties:
+            mdata = singer.metadata.to_map(self.stream.metadata)
+            key_properties = singer.metadata.get(mdata, (), 'table-key-properties') or singer.metadata.get(mdata, (), 'view-key-properties')
+        return key_properties
 
     @property
     def schema(self):
@@ -84,10 +90,17 @@ class SingerStream:
     @property
     def is_selected(self):
         mdata = singer.metadata.to_map(self.stream.metadata)
-        return self.schema.selected or singer.metadata.get(mdata, (), 'selected')
+        schema_dict = self.schema
+        if 'selected' in schema_dict:
+            return schema_dict['selected']
+        return singer.metadata.get(mdata, (), 'selected')
+
+    def property_is_selected(self, property_name: str):
+        mdata = singer.metadata.to_map(self.stream.metadata)
+        return singer.metadata.get(mdata, ('properties', property_name), 'selected')
 
     def unmark_as_selected(self):
-        schema_dict = self.stream.schema.to_dict()
+        schema_dict = self.schema
         if 'selected' in schema_dict:
             schema_dict['selected'] = False
             self.stream.schema = singer.schema.Schema.from_dict(schema_dict)
@@ -105,17 +118,40 @@ class SingerStream:
             self.stream.metadata = singer.metadata.to_list(mdata)
 
     def mark_as_selected(self, properties: [str] = None):
-        if properties:
-            mdata = singer.metadata.to_map(self.stream.metadata)
-            mdata = singer.metadata.write(mdata, (), 'selected', True)
+        mdata = singer.metadata.to_map(self.stream.metadata)
+        mdata = singer.metadata.write(mdata, (), 'selected', True)
 
-            for property_name in properties:
-                mdata = singer.metadata.write(mdata, ('properties', property_name), 'selected', True)
+        def breadcrumb_name(breadcrumb):
+            name = ".".join(breadcrumb)
+            name = name.replace('properties.', '')
+            name = name.replace('.items', '[]')
+            return name
 
-            self.stream.metadata = singer.metadata.to_list(mdata)
-        else:
-            schema_dict = self.stream.schema.to_dict()
+        for breadcrumb, _ in mdata.items():
+            if breadcrumb != ():
+                selected = False
+
+                property_name = breadcrumb_name(breadcrumb)
+
+                if singer.metadata.get(mdata, breadcrumb, 'inclusion') == 'automatic':
+                    selected = True
+                elif properties:
+                    selected = property_name in properties
+                elif singer.metadata.get(mdata, breadcrumb, 'selected-by-default'):
+                    selected = True
+
+                if property_name in (properties or []):
+                    selected = True
+
+                mdata = singer.metadata.write(mdata, breadcrumb, 'selected', selected)
+
+        self.stream.metadata = singer.metadata.to_list(mdata)
+
+        if not properties:
+            # legacy implementation
+            schema_dict = self.schema
             schema_dict['selected'] = True
+
             self.stream.schema = singer.schema.Schema.from_dict(schema_dict)
 
     @property
@@ -141,3 +177,56 @@ class SingerStream:
 
         mdata = singer.metadata.to_map(self.stream.metadata)
         return singer.metadata.get(mdata, (), 'replication-key')
+
+    def to_table(self) -> Table:
+        """
+        Creates a Table object from the JSON schema behind the singer stream
+        Only the selected properties will be added as columns to the table. When no selection marks
+        exist, the default selection applies
+        """
+        schema_dict = self.schema
+        if schema_dict.get('type') != 'object' and schema_dict.get('type') != ['null', 'object']:
+            raise Exception('The JSON schema must be of type object to be convertable to a SQL table')
+        if 'additionalProperties' in schema_dict and schema_dict['additionalProperties'] == True:
+            raise Exception('The JSON schema must not allow additional properties in its main object to be convertable to a SQL table')
+
+        from .schema import jsonschema
+        from .schema import Table
+
+        mdata = singer.metadata.to_map(self.stream.metadata)
+        schema_name = singer.metadata.get(mdata, (), 'schema-name')
+
+        table = Table(
+            table_name=self.name,
+            schema_name=schema_name)
+
+        key_properties = self.key_properties or []
+
+        use_property_selection = self.is_selected
+
+        for property_name, property_definition in schema_dict['properties'].items():
+            selected = False
+            if use_property_selection:
+                if self.property_is_selected(property_name):
+                    selected = True
+            else:
+                # use default selection
+                if singer.metadata.get(mdata, ('properties', property_name), 'inclusion') == 'automatic':
+                    selected = True
+                elif singer.metadata.get(mdata, ('properties', property_name), 'selected-by-default'):
+                    selected = True
+
+            if selected:
+                (datatype, is_nullable, is_array) = jsonschema.property_defintion_to_datatype(property_definition)
+
+                if is_nullable and property_name in key_properties:
+                    is_nullable = False
+
+                table.add_column(
+                    name=property_name,
+                    type=datatype,
+                    nullable=is_nullable,
+                    is_array=is_array,
+                    is_primary_key=(property_name in key_properties))
+
+        return table

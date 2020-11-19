@@ -84,7 +84,7 @@ class _SingerTapCommand(Command):
         return pathlib.Path(config.config_dir()) / self.config_file_name
 
     def state_file_path(self) -> pathlib.Path:
-        return pathlib.Path(config.state_dir()) / self.config_file_name
+        return pathlib.Path(config.state_dir()) / self.state_file_name
 
     def catalog_file_path(self) -> pathlib.Path:
         return pathlib.Path(config.catalog_dir()) / self.catalog_file_name
@@ -119,14 +119,14 @@ class _SingerTapCommand(Command):
         ]
 
         if self.config_file_name:
-        #    doc.append(('config file name', _.i[self.config_file_name]))
+            doc.append(('config file name', _.i[self.config_file_name]))
             doc.append((_.i['config file content'], html.highlight_syntax(config_file_content, 'json')))
         if self._tap_config:
             doc.append((_.i['config'], html.highlight_syntax(json.dumps(self._tap_config), 'json')))
             doc.append((_.i['config final'], html.highlight_syntax(config_final, 'json')))
 
         if self.state_file_name:
-        #    doc.append(('state file name', _.i[self.state_file_name]))
+            doc.append(('state file name', _.i[self.state_file_name]))
             doc.append((_.i['state file content'], html.highlight_syntax(state, 'json')))
 
         #if self.catalog_file_name:

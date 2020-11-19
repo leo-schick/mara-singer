@@ -3,12 +3,14 @@ import os
 import pathlib
 import typing as t
 
+import mara_db.config
+from mara_db.shell import Format
 from mara_pipelines.logging.logger import log
+from mara_pipelines.pipelines import Task
 from mara_page import _
 
-from ..catalog import SingerCatalog
+from ..catalog import SingerCatalog, SingerStream, ReplicationMethod
 from .singer import _SingerTapReadCommand
-
 from .. import config
 
 class FileFormat(enum.EnumMeta):
@@ -98,3 +100,84 @@ class SingerTapToFile(_SingerTapReadCommand):
             ('destination dir', self.destination_dir)
         ]
         return doc
+
+class SingerSyncFromFile(Task):
+    def __init__(self, id: str, description: str, file_name: str, file_format: FileFormat,
+                 stream: SingerStream, target_table: str, db_alias: str = None,
+                 max_retries: int = None, labels: {str, str} = None) -> None:
+        """
+        Synchronizes a singer stream to a database table based on a downloaded file via SingerTapToFile.
+
+        Args:
+            id: See class Task
+            description: See class Task
+            labels: See class Task
+            max_retries: See class Task
+
+            stream: the singer stream which was used to download the data
+            file_name: the local file name
+            file_format: the file format used when downloading the data
+            target_table: the target table name
+            db_alias: the target db alias
+        """
+        if file_format not in [FileFormat.JSONL]:
+            raise ValueError(f'Unsupported file format for ReadSingerStreamFile: {file_format}')
+
+        from mara_pipelines.commands.files import ReadFile, Compression
+        from mara_pipelines.commands.sql import ExecuteSQL
+        from ..schema.sql import delete_from, extract_jsondoctable_to_target_table
+        import mara_singer.schema.sql
+
+        _db_alias = db_alias if db_alias else mara_db.config.default_db_alias()
+        replication_method = stream.replication_method if stream.replication_method else ReplicationMethod.FULL_TABLE
+        commands = []
+
+        ## build commands list
+
+        table = stream.to_table()
+        table.table_name = target_table
+        table.schema_name = None
+
+        if replication_method == ReplicationMethod.FULL_TABLE:
+            # drop data from the table, depending on the sync. mode from the stream
+            commands.append(
+                ExecuteSQL(sql_statement=delete_from(_db_alias, table),
+                           db_alias=_db_alias))
+
+        db = mara_db.dbs.db(_db_alias)
+
+        # read new data into the table
+        if isinstance(db, mara_db.dbs.BigQueryDB):
+            if replication_method not in [ReplicationMethod.FULL_TABLE]:
+                raise NotImplementedError(f'Unsupported replication method for ReadSingerStreamFile with BigQueryDB: {replication_method}')
+
+            ReadFile(file_name=file_name,
+                     compression=Compression.NONE,
+                     target_table=target_table,
+                     db_alias=_db_alias)
+
+        elif isinstance(db, mara_db.dbs.PostgreSQLDB):
+            commands.append(
+                ExecuteSQL(sql_statement=f'DROP TABLE IF EXISTS {target_table}__tmp;', db_alias=_db_alias))
+            commands.append(
+                ExecuteSQL(sql_statement=f'CREATE TABLE IF NOT EXISTS {target_table}__tmp (data jsonb, row BIGINT GENERATED ALWAYS AS IDENTITY);', db_alias=_db_alias))
+
+            commands.append(
+                ReadFile(file_name=file_name,
+                         format=Format.JSONL,
+                         compression=Compression.NONE,
+                         target_table=f'{target_table}__tmp',
+                         db_alias=_db_alias))
+            commands.append(
+                ExecuteSQL(sql_statement=extract_jsondoctable_to_target_table(_db_alias, table,
+                                                                              source_table_name=f'{target_table}__tmp',
+                                                                              replication_method=replication_method),
+                           db_alias=_db_alias))
+            commands.append(
+                # cleanup
+                ExecuteSQL(sql_statement=f'DROP TABLE IF EXISTS {target_table}__tmp;', db_alias=_db_alias))
+
+        else:
+            raise NotImplementedError(f'Please implement ImportSingerStreamJsonlFile.__init__ for type "{db.__class__.__name__}"')
+
+        super().__init__(id, description, commands=commands, max_retries=max_retries, labels=labels)
