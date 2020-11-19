@@ -27,8 +27,7 @@ class _SingerTapCommand(Command):
         config_file_name: str = None, catalog_file_name: str = None, state_file_name: str = None,
 
         # optional args for special calls; NOTE might be removed some day!
-        pass_state_file: bool = None,
-        use_legacy_properties_arg: bool = False) -> None:
+        pass_state_file: bool = None) -> None:
         #assert all(v is None for v in [config_file_name]), f"unimplemented parameter for _SingerTapCommand"
         self.tap_name = tap_name
         self._tap_config = config
@@ -36,7 +35,6 @@ class _SingerTapCommand(Command):
         self.state_file_name = state_file_name
         self.pass_state_file = pass_state_file
         self.catalog_file_name = catalog_file_name
-        self.use_legacy_properties_arg = use_legacy_properties_arg
         self.__tmp_config_file_path = None
 
     def _patch_tap_config(self, config: dict):
@@ -118,16 +116,10 @@ class _SingerTapCommand(Command):
         if self.state_file_name and os.path.exists(self.state_file_path()) and os.stat(self.state_file_path()).st_size != 0:
             state_file_path = self.state_file_path()
 
-        command = (f'{self.tap_name}'
+        return (f'{self.tap_name}'
                 + f' --config {config_file_path}'
-                + (f' --state {state_file_path}' if state_file_path and self.pass_state_file else ''))
-
-        if self.use_legacy_properties_arg:
-            command += f' --properties {self.catalog_file_path()}' if self.catalog_file_name else ''
-        else:
-            command += f' --catalog {self.catalog_file_path()}' if self.catalog_file_name else ''
-
-        return command
+                + (f' --state {state_file_path}' if state_file_path and self.pass_state_file else '')
+                + (f' -p {self.catalog_file_path()} --catalog {self.catalog_file_path()}' if self.catalog_file_name else ''))
 
     def html_doc_items(self) -> [(str, str)]:
         config_file_content = self.config_file_path().read_text().strip('\n') if self.config_file_path().exists() else '-- file not found'
@@ -160,13 +152,12 @@ class _SingerTapReadCommand(_SingerTapCommand):
 
     def __init__(self, tap_name: str, stream_selection: t.Union[t.List[str], t.Dict[str, t.List[str]]] = None,
         config: dict = None, config_file_name: str = None,
-        catalog_file_name: str = None, state_file_name: str = None, use_state_file: bool = True, pass_state_file: bool = False,
-        use_legacy_properties_arg: bool = False) -> None:
+        catalog_file_name: str = None, state_file_name: str = None, use_state_file: bool = True, pass_state_file: bool = False) -> None:
         super().__init__(tap_name,
             config=config, config_file_name=config_file_name,
             catalog_file_name=catalog_file_name if catalog_file_name else f'{tap_name}.json',
             state_file_name=state_file_name if state_file_name else (f'{tap_name}.json' if use_state_file else None),
-            pass_state_file=pass_state_file, use_legacy_properties_arg=use_legacy_properties_arg)
+            pass_state_file=pass_state_file)
 
         self.stream_selection = stream_selection
         self.__tmp_catalog_file_path = None
