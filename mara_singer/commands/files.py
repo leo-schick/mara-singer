@@ -29,8 +29,7 @@ class SingerTapToFile(_SingerTapReadCommand):
 
         # optional args for special calls; NOTE might be removed some day!
         use_state_file: bool = True,
-        pass_state_file: bool = True,
-        use_legacy_properties_arg: bool = False) -> None:
+        pass_state_file: bool = True) -> None:
         """
         Reads data from a singer.io tab and writes the content to file per stream.
 
@@ -45,14 +44,13 @@ class SingerTapToFile(_SingerTapReadCommand):
             state_file_name: (default: {tap_name}.json) The state file name
             use_state_file: (default: True) If the state file name should be passed to the tap command
             pass_state_file: (default: False) If the state file shall be passed to the tap. Is only passed when state_file_name is given.
-            use_legacy_properties_arg: (default: False) Some old taps do not support the --catalog parameter but still require the deprecated --properties parameter
         """
         super().__init__(tap_name,
             stream_selection=stream_selection,
             config=config, config_file_name=config_file_name,
             catalog_file_name=catalog_file_name if catalog_file_name else f'{tap_name}.json',
             state_file_name=state_file_name if state_file_name else (f'{tap_name}.json' if use_state_file else None),
-            pass_state_file=pass_state_file, use_legacy_properties_arg=use_legacy_properties_arg)
+            pass_state_file=pass_state_file)
 
         self.target_format = target_format
 
