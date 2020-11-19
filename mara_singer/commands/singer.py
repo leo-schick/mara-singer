@@ -3,12 +3,21 @@ import json
 import pathlib
 import typing as t
 
+
 from mara_pipelines.logging.logger import log
 from mara_pipelines.pipelines import Command
 from mara_page import _, html
 
 from ..catalog import SingerCatalog
 from .. import config
+
+def unique_file_suffix() -> str:
+    """Returns a uniqe string to be used for a temp file suffix"""
+    import uuid
+    import datetime
+    datetime_part = datetime.datetime.now().isoformat().replace(':','')
+    return f'{datetime_part}-{uuid.uuid4().hex}'
+
 
 class _SingerTapCommand(Command):
     """A base command class for interacting with a singer tab"""
@@ -28,6 +37,7 @@ class _SingerTapCommand(Command):
         self.pass_state_file = pass_state_file
         self.catalog_file_name = catalog_file_name
         self.use_legacy_properties_arg = use_legacy_properties_arg
+        self.__tmp_config_file_path = None
 
     def _patch_tap_config(self, config: dict):
         """A method which is called before writing the patched config"""
@@ -63,10 +73,11 @@ class _SingerTapCommand(Command):
         shell_command = self.shell_command()
 
         # create temp tap config file
+        tmp_config_file_path = None
         if self._tap_config:
-            tmp_tap_config_path = pathlib.Path(config.config_dir()) / f'{self.config_file_name}.tmp'
+            tmp_config_file_path = self.config_file_path()
             tap_config = self.tap_config
-            with open(tmp_tap_config_path, 'w') as tap_config_file:
+            with open(tmp_config_file_path, 'w') as tap_config_file:
                 json.dump(tap_config, tap_config_file)
         elif not os.path.exists(self.config_file_path()):
             log(message=f"The tap config '{self.config_file_path()}' does not exist.", is_error=True)
@@ -76,12 +87,18 @@ class _SingerTapCommand(Command):
             result = shell.singer_run_shell_command(shell_command)
         finally:
             if self._tap_config:
-                os.remove(tmp_tap_config_path)
+                os.remove(tmp_config_file_path)
+                self.__tmp_tap_config_path = None
 
         return result
 
     def config_file_path(self) -> pathlib.Path:
-        return pathlib.Path(config.config_dir()) / self.config_file_name
+        if self._tap_config:
+            if not self.__tmp_config_file_path:
+                self.__tmp_config_file_path = pathlib.Path(config.config_dir()) / f'{self.config_file_name}.tmp-{unique_file_suffix()}'
+            return self.self.__tmp_config_file_path
+        else:
+            return pathlib.Path(config.config_dir()) / self.config_file_name
 
     def state_file_path(self) -> pathlib.Path:
         return pathlib.Path(config.state_dir()) / self.state_file_name
@@ -92,7 +109,10 @@ class _SingerTapCommand(Command):
     def shell_command(self):
         config_file_path = self.config_file_path()
         if self._tap_config:
-            config_file_path = pathlib.Path(config.config_dir()) / f'{self.config_file_name}.tmp'
+            if self.__tmp_tap_config_path:
+                config_file_path = self.__tmp_tap_config_path
+            else: # this is only for UI display. In a real run, a unique temp file will be generated
+                config_file_path = pathlib.Path(config.config_dir()) / f'{self.config_file_name}.tmp'
 
         state_file_path = None
         if self.state_file_name and os.path.exists(self.state_file_path()) and os.stat(self.state_file_path()).st_size != 0:
@@ -149,11 +169,15 @@ class _SingerTapReadCommand(_SingerTapCommand):
             pass_state_file=pass_state_file, use_legacy_properties_arg=use_legacy_properties_arg)
 
         self.stream_selection = stream_selection
+        self.__tmp_catalog_file_path = None
+        self.__target_config_path = None
  
     def catalog_file_path(self) -> pathlib.Path:
         path = super().catalog_file_path()
         if self.stream_selection:
-            path = pathlib.Path(f'{path}.tmp')
+            if not self.__tmp_catalog_file_path:
+                self.__tmp_catalog_file_path = pathlib.Path(f'{path}.tmp-{unique_file_suffix()}')
+            path = self.__tmp_catalog_file_path
         return path
 
     def _pre_run(self) -> bool:
@@ -167,7 +191,9 @@ class _SingerTapReadCommand(_SingerTapCommand):
         raise NotImplementedError(f'Please implement _target_name() for type "{self.__class__.__name__}"')
 
     def _target_config_path(self):
-        return pathlib.Path(config.config_dir()) / f'{self._target_name()}.json.tmp'
+        if not self.__target_config_path:
+            self.__target_config_path = pathlib.Path(config.config_dir()) / f'{self._target_name()}.json.tmp-{unique_file_suffix()}'
+        return self.__target_config_path
 
     def run(self) -> bool:
         # create temp catalog (if necessary)
@@ -217,7 +243,9 @@ class _SingerTapReadCommand(_SingerTapCommand):
         finally:
             if self.stream_selection:
                 os.remove(tmp_catalog_file_path)
+                self.__tmp_catalog_file_path = None
             os.remove(tmp_target_config_path)
+            self.__target_config_path = None
 
         return True
 
