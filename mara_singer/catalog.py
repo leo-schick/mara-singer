@@ -185,7 +185,7 @@ class SingerStream:
         exist, the default selection applies
         """
         schema_dict = self.schema
-        if schema_dict.get('type') != 'object' and schema_dict.get('type') != ['null', 'object']:
+        if 'type' not in schema_dict or 'object' not in schema_dict['type']:
             raise Exception('The JSON schema must be of type object to be convertable to a SQL table')
         if 'additionalProperties' in schema_dict and schema_dict['additionalProperties'] == True:
             raise Exception('The JSON schema must not allow additional properties in its main object to be convertable to a SQL table')
