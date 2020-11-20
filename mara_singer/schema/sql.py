@@ -236,7 +236,7 @@ def __(db: dbs.PostgreSQLDB, table: Table, source_table_name: str, replication_m
         sql_statement += f'\n  DISTINCT ON ({distinct_on_final})'
     sql_statement += f'\n  {select_clause}\nFROM {source_table_name}'
 
-    if replication_method == ReplicationMethod.INCREMENTAL:
+    if replication_method == ReplicationMethod.INCREMENTAL and distinct_on:
         key_columns = ', '.join(column.name for column in table.primary_key_columns)
 
         update_set_expressions: [str] = []
