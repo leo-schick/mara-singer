@@ -5,6 +5,154 @@ from mara_db import dbs
 
 from . import Table, Column, DataType, StructDataType
 
+# source: https://www.postgresql.org/docs/8.1/sql-keywords-appendix.html
+POSTGRESQL_RESERVED_KEYWORDS = [
+    'ALL', 'ANALYSE', 'ANALYZE', 'AND', 'ANY', 'ARRAY', 'AS', 'ASC', 'ASYMMETRIC', 'BOTH', 'CASE', 'CAST', 'CHECK',
+    'COLLATE', 'COLUMN', 'CONSTRAINT', 'CREATE', 'CURRENT_DATE', 'CURRENT_ROLE', 'CURRENT_TIME', 'CURRENT_TIMESTAMP',
+    'CURRENT_USER', 'DEFAULT', 'DEFERRABLE', 'DESC', 'DISTINCT', 'DO', 'ELSE', 'END', 'EXCEPT', 'FALSE', 'FOR',
+    'FOREIGN', 'FROM', 'GRANT', 'GROUP', 'HAVING', 'IN', 'INITIALLY', 'INTERSECT', 'INTO', 'LEADING', 'LIMIT',
+    'LOCALTIME', 'LOCALTIMESTAMP', 'NEW', 'NOT', 'NULL', 'OFF', 'OFFSET', 'OLD', 'ON', 'ONLY', 'OR', 'ORDER',
+    'PLACING', 'PRIMARY', 'REFERENCES', 'SELECT', 'SESSION_USER', 'SOME', 'SYMMETRIC', 'TABLE', 'THEN', 'TO',
+    'TRAILING', 'TRUE', 'UNION', 'UNIQUE', 'USER', 'USING', 'WHEN', 'WHERE', 'AUTHORIZATION', 'BETWEEN', 'BINARY',
+    'CROSS', 'FREEZE', 'FULL', 'ILIKE', 'INNER', 'IS', 'ISNULL', 'JOIN', 'LEFT', 'LIKE', 'NATURAL', 'NOTNULL', 'OUTER',
+    'OVERLAPS', 'RIGHT', 'SIMILAR', 'VERBOSE'
+]
+
+# source: https://www.postgresql.org/docs/8.1/sql-keywords-appendix.html
+POSTGRESQL_NON_RESERVED_KEYWORDS = [
+    'ABORT', 'ABSOLUTE', 'ACCESS', 'ACTION', 'ADD', 'ADMIN', 'AFTER', 'AGGREGATE', 'ALSO', 'ALTER', 'ASSERTION',
+    'ASSIGNMENT', 'AT', 'BACKWARD', 'BEFORE', 'BEGIN', 'BY', 'CACHE', 'CALLED', 'CASCADE', 'CHAIN', 'CHARACTERISTICS',
+    'CHECKPOINT', 'CLASS', 'CLOSE', 'CLUSTER', 'COMMENT', 'COMMIT', 'COMMITTED', 'CONNECTION', 'CONSTRAINTS',
+    'CONVERSION', 'COPY', 'CREATEDB', 'CREATEROLE', 'CREATEUSER', 'CSV', 'CURSOR', 'CYCLE', 'DATABASE', 'DAY',
+    'DEALLOCATE', 'DECLARE', 'DEFAULTS', 'DEFERRED', 'DEFINER', 'DELETE', 'DELIMITER', 'DELIMITERS', 'DISABLE',
+    'DOMAIN', 'DOUBLE', 'DROP', 'EACH', 'ENABLE', 'ENCODING', 'ENCRYPTED', 'ESCAPE', 'EXCLUDING', 'EXCLUSIVE',
+    'EXECUTE', 'EXPLAIN', 'EXTERNAL', 'FETCH', 'FIRST', 'FORCE', 'FORWARD', 'FUNCTION', 'GLOBAL', 'GRANTED', 'HANDLER',
+    'HEADER', 'HOLD', 'HOUR', 'IMMEDIATE', 'IMMUTABLE', 'IMPLICIT', 'INCLUDING', 'INCREMENT', 'INDEX', 'INHERIT',
+    'INHERITS', 'INPUT', 'INSENSITIVE', 'INSERT', 'INSTEAD', 'INVOKER', 'ISOLATION', 'KEY', 'LANCOMPILER', 'LANGUAGE',
+    'LARGE', 'LAST', 'LEVEL', 'LISTEN', 'LOAD', 'LOCAL', 'LOCATION', 'LOCK', 'LOGIN', 'MATCH', 'MAXVALUE', 'MINUTE',
+    'MINVALUE', 'MODE', 'MONTH', 'MOVE', 'NAMES', 'NEXT', 'NO', 'NOCREATEDB', 'NOCREATEROLE', 'NOCREATEUSER',
+    'NOINHERIT', 'NOLOGIN', 'NOSUPERUSER', 'NOTHING', 'NOTIFY', 'NOWAIT', 'OBJECT', 'OF', 'OIDS', 'OPERATOR', 'OPTION',
+    'OWNER', 'PARTIAL', 'PASSWORD', 'PREPARE', 'PREPARED', 'PRESERVE', 'PRIOR', 'PRIVILEGES', 'PROCEDURAL', 'PROCEDURE',
+    'QUOTE', 'READ', 'RECHECK', 'REINDEX', 'RELATIVE', 'RELEASE', 'RENAME', 'REPEATABLE', 'REPLACE', 'RESET',
+    'RESTART', 'RESTRICT', 'RETURNS', 'REVOKE', 'ROLE', 'ROLLBACK', 'ROWS', 'RULE', 'SAVEPOINT', 'SCHEMA', 'SCROLL',
+    'SECOND', 'SECURITY', 'SEQUENCE', 'SERIALIZABLE', 'SESSION', 'SET', 'SHARE', 'SHOW', 'SIMPLE', 'STABLE', 'START',
+    'STATEMENT', 'STATISTICS', 'STDIN', 'STDOUT', 'STORAGE', 'STRICT', 'SUPERUSER', 'SYSID', 'SYSTEM', 'TABLESPACE',
+    'TEMP', 'TEMPLATE', 'TEMPORARY', 'TOAST', 'TRANSACTION', 'TRIGGER', 'TRUNCATE', 'TRUSTED', 'TYPE', 'UNCOMMITTED',
+    'UNENCRYPTED', 'UNKNOWN', 'UNLISTEN', 'UNTIL', 'UPDATE', 'VACUUM', 'VALID', 'VALIDATOR', 'VALUES', 'VARYING',
+    'VIEW', 'VOLATILE', 'WITH', 'WITHOUT', 'WORK', 'WRITE', 'YEAR', 'ZONE', 'BIGINT', 'BIT', 'BOOLEAN', 'CHAR',
+    'CHARACTER', 'COALESCE', 'CONVERT', 'DEC', 'DECIMAL', 'EXISTS', 'EXTRACT', 'FLOAT', 'GREATEST', 'INOUT', 'INT',
+    'INTEGER', 'INTERVAL', 'LEAST', 'NATIONAL', 'NCHAR', 'NONE', 'NULLIF', 'NUMERIC', 'OUT', 'OVERLAY', 'POSITION',
+    'PRECISION', 'REAL', 'ROW', 'SETOF', 'SMALLINT', 'SUBSTRING', 'TIME', 'TIMESTAMP', 'TREAT', 'TRIM', 'VARCHAR'
+]
+
+# source: https://cloud.google.com/bigquery/docs/reference/standard-sql/lexical#reserved_keywords
+BIGQUERYDB_RESERVED_KEYWORDS = [
+    'ALL', 'AND', 'ANY', 'ARRAY', 'AS', 'ASC', 'ASSERT_ROWS_MODIFIED', 'AT', 'BETWEEN', 'BY', 'CASE', 'CAST', 'COLLATE',
+    'CONTAINS', 'CREATE', 'CROSS', 'CUBE', 'CURRENT', 'DEFAULT', 'DEFINE', 'DESC', 'DISTINCT', 'ELSE', 'END', 'ENUM',
+    'ESCAPE', 'EXCEPT', 'EXCLUDE', 'EXISTS', 'EXTRACT', 'FALSE', 'FETCH', 'FOLLOWING', 'FOR', 'FROM', 'FULL', 'GROUP',
+    'GROUPING', 'GROUPS', 'HASH', 'HAVING', 'IF', 'IGNORE', 'IN', 'INNER', 'INTERSECT', 'INTERVAL', 'INTO', 'IS',
+    'JOIN', 'LATERAL', 'LEFT', 'LIKE', 'LIMIT', 'LOOKUP', 'MERGE', 'NATURAL', 'NEW', 'NO', 'NOT', 'NULL', 'NULLS', 'OF',
+    'ON', 'OR', 'ORDER', 'OUTER', 'OVER', 'PARTITION', 'PRECEDING', 'PROTO', 'RANGE', 'RECURSIVE', 'RESPECT', 'RIGHT',
+    'ROLLUP', 'ROWS', 'SELECT', 'SET', 'SOME', 'STRUCT', 'TABLESAMPLE', 'THEN', 'TO', 'TREAT', 'TRUE', 'UNBOUNDED',
+    'UNION', 'UNNEST', 'USING', 'WHEN', 'WHERE', 'WINDOW', 'WITH', 'WITHIN'
+]
+
+# source: https://docs.microsoft.com/en-us/sql/t-sql/language-elements/reserved-keywords-transact-sql?view=sql-server-ver15
+SQLSERVERDB_RESERVED_KEYWORDS = [
+    'ADD', 'EXTERNAL', 'PROCEDURE', 'ALL', 'FETCH', 'PUBLIC', 'ALTER', 'FILE', 'RAISERROR', 'AND', 'FILLFACTOR', 'READ',
+    'ANY', 'FOR', 'READTEXT', 'AS', 'FOREIGN', 'RECONFIGURE', 'ASC', 'FREETEXT', 'REFERENCES', 'AUTHORIZATION',
+    'FREETEXTTABLE', 'REPLICATION', 'BACKUP', 'FROM', 'RESTORE', 'BEGIN', 'FULL', 'RESTRICT', 'BETWEEN', 'FUNCTION',
+    'RETURN', 'BREAK', 'GOTO', 'REVERT', 'BROWSE', 'GRANT', 'REVOKE', 'BULK', 'GROUP', 'RIGHT', 'BY', 'HAVING',
+    'ROLLBACK', 'CASCADE', 'HOLDLOCK', 'ROWCOUNT', 'CASE', 'IDENTITY', 'ROWGUIDCOL', 'CHECK', 'IDENTITY_INSERT', 'RULE',
+    'CHECKPOINT', 'IDENTITYCOL', 'SAVE', 'CLOSE', 'IF', 'SCHEMA', 'CLUSTERED', 'IN', 'SECURITYAUDIT', 'COALESCE',
+    'INDEX', 'SELECT', 'COLLATE', 'INNER', 'SEMANTICKEYPHRASETABLE', 'COLUMN', 'INSERT',
+    'SEMANTICSIMILARITYDETAILSTABLE', 'COMMIT', 'INTERSECT', 'SEMANTICSIMILARITYTABLE', 'COMPUTE', 'INTO',
+    'SESSION_USER', 'CONSTRAINT', 'IS', 'SET', 'CONTAINS', 'JOIN', 'SETUSER', 'CONTAINSTABLE', 'KEY', 'SHUTDOWN',
+    'CONTINUE', 'KILL', 'SOME', 'CONVERT', 'LEFT', 'STATISTICS', 'CREATE', 'LIKE', 'SYSTEM_USER', 'CROSS', 'LINENO',
+    'TABLE', 'CURRENT', 'LOAD', 'TABLESAMPLE', 'CURRENT_DATE', 'MERGE', 'TEXTSIZE', 'CURRENT_TIME', 'NATIONAL', 'THEN',
+    'CURRENT_TIMESTAMP', 'NOCHECK', 'TO', 'CURRENT_USER', 'NONCLUSTERED', 'TOP', 'CURSOR', 'NOT', 'TRAN', 'DATABASE',
+    'NULL', 'TRANSACTION', 'DBCC', 'NULLIF', 'TRIGGER', 'DEALLOCATE', 'OF', 'TRUNCATE', 'DECLARE', 'OFF', 'TRY_CONVERT',
+    'DEFAULT', 'OFFSETS', 'TSEQUAL', 'DELETE', 'ON', 'UNION', 'DENY', 'OPEN', 'UNIQUE', 'DESC', 'OPENDATASOURCE',
+    'UNPIVOT', 'DISK', 'OPENQUERY', 'UPDATE', 'DISTINCT', 'OPENROWSET', 'UPDATETEXT', 'DISTRIBUTED', 'OPENXML', 'USE',
+    'DOUBLE', 'OPTION', 'USER', 'DROP', 'OR', 'VALUES', 'DUMP', 'ORDER', 'VARYING', 'ELSE', 'OUTER', 'VIEW', 'END',
+    'OVER', 'WAITFOR', 'ERRLVL', 'PERCENT', 'WHEN', 'ESCAPE', 'PIVOT', 'WHERE', 'EXCEPT', 'PLAN', 'WHILE', 'EXEC',
+    'PRECISION', 'WITH', 'EXECUTE', 'PRIMARY', 'WITHIN GROUP', 'EXISTS', 'PRINT', 'WRITETEXT', 'EXIT', 'PROC'
+]
+
+@singledispatch
+def quote_name(db: object, name: str, enforce: bool = False) -> str:
+    """
+    Makes sure that a SQL identifier is properly quoted if that is necessary
+
+    Args:
+        db: the db config or alias
+        name: the name of the identifier to be quoted
+        enforce: enforces quotation even it might not be necessary
+    """
+    raise NotImplementedError(f'Please implement function quote_name for type "{db.__class__.__name__}"')
+
+@quote_name.register(str)
+def __(alias: str, name: str, enforce: bool = False) -> str:
+    return quote_name(dbs.db(alias), name, enforce=enforce)
+
+@quote_name.register(dbs.DB)
+def __(db: dbs.PostgreSQLDB, name: str, enforce: bool = False):
+    # this here is the default implementation in case this function is not implemented for a specific DB
+
+    do_quote = enforce
+
+    if not do_quote:
+        if ' ' in name:
+            do_quote = True
+
+    # using SQL standard quotation
+    return f'"{name}"' if do_quote else name
+
+@quote_name.register(dbs.PostgreSQLDB)
+def __(db: dbs.PostgreSQLDB, name: str, enforce: bool = False):
+    do_quote = enforce
+
+    if not do_quote:
+        if ' ' in name:
+            do_quote = True
+
+    if not do_quote:
+        if name.upper() in POSTGRESQL_RESERVED_KEYWORDS:
+            do_quote = True
+        elif name.upper() in POSTGRESQL_NON_RESERVED_KEYWORDS:
+            do_quote = True
+
+    return f'"{name}"' if do_quote else name
+
+@quote_name.register(dbs.BigQueryDB)
+def __(db: dbs.BigQueryDB, name: str, enforce: bool = False):
+    do_quote = enforce
+
+    if not do_quote:
+        if ' ' in name:
+            do_quote = True
+
+    if not do_quote:
+        if name.upper() in BIGQUERYDB_RESERVED_KEYWORDS:
+            do_quote = True
+
+    return f'"{name}"' if do_quote else name
+
+@quote_name.register(dbs.SQLServerDB)
+def __(db: dbs.SQLServerDB, name: str, enforce: bool = False):
+    do_quote = enforce
+
+    if not do_quote:
+        if ' ' in name:
+            do_quote = True
+
+    if not do_quote:
+        if name.upper() in SQLSERVERDB_RESERVED_KEYWORDS:
+            do_quote = True
+
+    return f'[{name}]' if do_quote else name
+
+
 
 @singledispatch
 def create_table(db:object, table: Table, if_not_exists: bool = False) -> str:
@@ -18,7 +166,7 @@ def __(alias: str, table: Table, if_not_exists: bool = False) -> str:
 def __(db: dbs.PostgreSQLDB, table: Table, if_not_exists: bool = False) -> str:
     columns: [str] = []
     for column in table.columns:
-        columns.append(f'{column.name} {datatype_definition(db, column.type)}'
+        columns.append(f'{quote_name(db, column.name)} {datatype_definition(db, column.type)}'
                        +('[]' if column.is_array else '')
                        +(' NOT NULL' if not column.nullable else ''))
 
@@ -37,7 +185,7 @@ def __(db: dbs.PostgreSQLDB, table: Table, if_not_exists: bool = False) -> str:
 def __(db: dbs.BigQueryDB, table: Table, if_not_exists: bool = False) -> str:
     columns: [str] = []
     for column in table.columns:
-        columns.append(f'{column.name} '
+        columns.append(f'{quote_name(db, column.name)} '
                        +('ARRAY<' if column.is_array else '')
                        +datatype_definition(db, column.type)
                        +('>' if column.is_array else '')
@@ -137,7 +285,7 @@ def __(db: dbs.BigQueryDB, datatype: t.Union[DataType, StructDataType]):
         field_definition = []
         for field in datatype.fields:
             field_definition.append(
-                ((f'{field.name} ' if field.name else '')
+                ((f'{quote_name(db, field.name)} ' if field.name else '')
                  + ('ARRAY<' if field.is_array else '')
                  + datatype_definition(db, field.type)
                  + ('>' if field.is_array else '')
@@ -199,7 +347,8 @@ def __(db: dbs.PostgreSQLDB, table: Table, source_table_name: str, replication_m
     select_fields = []
     distinct_on = []
     for column in table.columns:
-        insert_fields.append(column.name)
+        sql_column_name = quote_name(db, column.name)
+        insert_fields.append(sql_column_name)
 
         column_type = datatype_definition(db, column.type)
 
@@ -215,7 +364,7 @@ def __(db: dbs.PostgreSQLDB, table: Table, source_table_name: str, replication_m
         if replication_method == ReplicationMethod.INCREMENTAL and column in table.primary_key_columns:
             distinct_on.append(select_field)
 
-        select_field = f'{select_field} AS {column.name}'
+        select_field = f'{select_field} AS {sql_column_name}'
         select_fields.append(select_field)
 
     field_list = ',\n  '.join(insert_fields)
@@ -242,7 +391,8 @@ def __(db: dbs.PostgreSQLDB, table: Table, source_table_name: str, replication_m
         update_set_expressions: [str] = []
         for column in table.columns:
             if column not in table.primary_key_columns:
-                update_set_expressions.append(f'{column.name} = EXCLUDED.{column.name}')
+                sql_column_name = quote_name(db, column.name)
+                update_set_expressions.append(f'{sql_column_name} = EXCLUDED.{sql_column_name}')
 
         sql_statement += f'\nORDER BY {distinct_on_final}, row DESC'
         sql_statement += f'\nON CONFLICT ({key_columns})'
