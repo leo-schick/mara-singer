@@ -22,8 +22,6 @@ def property_defintion_to_datatype(property_definition) -> (t.Union[DataType, St
                     struct = StructDataType(name=None)
                     for sub_property_name, sub_property_definition in property_definition['properties'].items():
                         (sub_type, sub_is_nullable, sub_is_array) = property_defintion_to_datatype(sub_property_definition)
-                        if sub_property_name == 'amount':
-                            print(f'sub_property_name: amount; nullable={sub_is_nullable}')
                         struct.add_field(name=sub_property_name,
                                          type=sub_type,
                                          nullable=sub_is_nullable,
