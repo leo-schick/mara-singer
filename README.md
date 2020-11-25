@@ -138,3 +138,15 @@ git commit -m 'install mara-singer module'
 ```
 
 Congratulation :tada: you have now completed the mara-singer package installation!
+
+&nbsp;
+
+## How to install a new singer tap
+
+1. Add the tap to the `singer-requirements.txt` file
+2. call `make install-singer-packages` in the shell to install the singer tap
+3. add a config in the singer config folder, e.g. in `app/singer/config/<tap-name>.json`
+4. run `source .venv/bin/activate; flask mara_singer.discover --tap-name <tap-name>` to test the tap and receive the catalog file
+
+Now you are ready to go! The singer tap is installed and the catalog is downloaded under `app/singer/catalog/<tap-name>.json`.
+You can now set up your pipeline and e.g. use the command `SingerTapToDB` to download the singer tap data into a database schema.
