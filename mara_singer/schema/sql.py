@@ -189,7 +189,7 @@ def __(db: dbs.BigQueryDB, table: Table, if_not_exists: bool = False) -> str:
                        +('ARRAY<' if column.is_array else '')
                        +datatype_definition(db, column.type)
                        +('>' if column.is_array else '')
-                       +(' NOT NULL' if not column.nullable else ''))
+                       +(' NOT NULL' if not column.nullable and not column.is_array else ''))
 
     return ('CREATE TABLE '
             +('IF NOT EXISTS ' if if_not_exists else '')
