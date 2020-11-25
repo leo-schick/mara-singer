@@ -269,7 +269,6 @@ class SingerTapDiscover(_SingerTapCommand):
             config_file_name: (default: {tap_name}.json) The tap config file name
             catalog_file_name: (default: {tap_name}.json) The catalog file name
         """
-        assert all(v is None for v in [config_file_name, catalog_file_name]), f"unimplemented parameter for TapDiscover"
         super().__init__(tap_name, config_file_name=config_file_name)
         self.new_catalog_file_name = catalog_file_name if catalog_file_name else f'{tap_name}.json'
 

@@ -16,10 +16,6 @@ def catalog_dir():
     """The directory where state files are stored"""
     return pathlib.Path('./app/singer/catalog')
 
-def tap_names() -> [str]:
-    """The list of tap names installed"""
-    return []
-
 import os
 import json
 
