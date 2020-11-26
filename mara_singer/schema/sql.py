@@ -289,7 +289,7 @@ def __(db: dbs.BigQueryDB, datatype: t.Union[DataType, StructDataType]):
                  + ('ARRAY<' if field.is_array else '')
                  + datatype_definition(db, field.type)
                  + ('>' if field.is_array else '')
-                 + (' NOT NULL' if not field.nullable else '')))
+                 + (' NOT NULL' if not field.nullable and not field.is_array else '')))
         return 'STRUCT<{}>'.format(', '.join(field_definition))
     else:
         if datatype == DataType.INT:
