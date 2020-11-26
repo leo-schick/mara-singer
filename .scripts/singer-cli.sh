@@ -248,14 +248,14 @@ elif [[ $1 == 'freeze' ]]; then
 	CURRENT_ENV="$VIRTUAL_ENV"
 
 	bash ./$0 list |
-		while IFS= read -r line
+		while IFS= read -r PACKAGE_NAME
 		do
-			PACKAGE_VENV="$CURRENT_ENV/../.singer/$line"
-			$PACKAGE_VENV/bin/pip freeze | grep $line | head -1
+			PACKAGE_VENV="$CURRENT_ENV/../.singer/$PACKAGE_NAME"
+			$PACKAGE_VENV/bin/pip freeze | grep $PACKAGE_NAME | head -1 | sed "s/#egg=.\+/#egg=$PACKAGE_NAME/"
 		done
 
 else
-	echo 'singer-cli.sh 0.4.0'
+	echo 'singer-cli.sh 0.4.1'
 	echo 'Usage: singer-cli.sh <command> [args]'
 	echo ''
 	echo 'singer-cli.sh is a simple package manager script for singer.io'
