@@ -15,9 +15,18 @@ setup-singer: .copy-mara-singer-scripts
 .copy-mara-singer-scripts:
 	rsync --archive --recursive --itemize-changes  --delete $(mara-singer-package-dir)/.scripts/ $(mara-singer-scripts-dir)
 
-# install singer packages from requirements.singer.txt
+# install singer packages from singer-requirements.txt.freeze
 install-singer-packages:
-	source .venv/bin/activate; .scripts/mara-singer/singer-cli.sh install -r singer-requirements.txt
+	make .venv/bin/python
+	source .venv/bin/activate; .scripts/mara-singer/singer-cli.sh install --requirement=singer-requirements.txt.freeze --src=./packages --upgrade --exists-action=w
+
+# update packages from singer-requirements.txt and create singer-requirements.txt.freeze
+update-singer-packages:
+	make .venv/bin/python
+	PYTHONWARNINGS="ignore" .scripts/mara-singer/singer-cli.sh install --requirement=singer-requirements.txt --src=./packages --upgrade --exists-action=w
+
+	# write freeze file
+	.scripts/mara-singer/singer-cli.sh freeze > singer-requirements.txt.freeze
 
 .cleanup-singer:
 	rm -rf $(singer-directory)

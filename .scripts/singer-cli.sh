@@ -20,75 +20,153 @@ if [[ $1 == 'install' ]]; then
 
 	## install package
 
-	if [[ $2 == '-r' ]] || [[ $2 == '--requirement' ]]; then
+	if [[ $2 == '-r' ]] || [[ $2 == '--requirement' ]] || [[ $2 == '--requirement='* ]]; then
 
 		## install from requirements file
 
-		if [[ $3 == '' ]] || [[ -f "$3" ]]; then
-
-			cat $3 | sed "s/\r$//" | while IFS= read -r line
-			do
-				# cut comments from the line (only when not is git+ command)
-				if ! [[ $line = '-e git+'* ]]; then
-					line=$(echo "$line" | cut -f1 -d"#")
-				fi
-				# and trim whitespaces
-				line=$(trim "$line")
-
-				if [[ $line != '' ]]; then
-
-					# get package name
-					if [[ $line = '-e git+'* ]]; then
-						PACKAGE_NAME=$(cut -d '=' -f2 <<< "$line")
-					else
-						PACKAGE_NAME="$line"
-
-						# remove version info from package name
-						PACKAGE_NAME=$(cut -d '~' -f1 <<< "$PACKAGE_NAME")
-						PACKAGE_NAME=$(cut -d '!' -f1 <<< "$PACKAGE_NAME")
-						PACKAGE_NAME=$(cut -d '>' -f1 <<< "$PACKAGE_NAME")
-						PACKAGE_NAME=$(cut -d '<' -f1 <<< "$PACKAGE_NAME")
-						PACKAGE_NAME=$(cut -d '=' -f1 <<< "$PACKAGE_NAME")
-					fi
-
-					# run install
-					echo -e "${PALETTE_INFO}singer-cli.sh install \"$line\"${PALETTE_RESET}"
-					bash ./$0 install "$line"
-					RC=$?; [ $RC -ne 0 ] && exit $RC
-				fi
-			done
-
+		if [[ $2 == '--requirement='* ]]; then
+			REQUIREMENTS_FILE="${2:14}"
+		elif [[ $3 == '' ]] || [[ -f "$3" ]]; then
+			REQUIREMENTS_FILE="$3"
+			shift
 		else
-			echo -e "${PALETTE_ERROR}requirements file '$3' not given or does not exist${PALETTE_RESET}"
+			echo -e "${PALETTE_ERROR}requirements file not given${PALETTE_RESET}"
 			exit 1
 		fi
+
+		PIP_INSTALL_SUB_ARGS=''
+		while [ -n "$3" ]
+		do
+			PIP_INSTALL_SUB_ARGS="$PIP_INSTALL_SUB_ARGS $3"
+			shift
+		done
+
+		cat $REQUIREMENTS_FILE | sed "s/\r$//" | while IFS= read -r line
+		do
+			# trim whitespaces
+			line=$(trim "$line")
+
+			if [[ $line != '' ]] && [[ $line != '#'* ]] ; then
+				if [[ $line = '-e '* ]]; then
+					PIP_INSTALL_PRE_ARGS='-e '
+					PACKAGE_NAME_CALL="${line:3}"
+				else
+					PIP_INSTALL_PRE_ARGS=''
+					PACKAGE_NAME_CALL="$line"
+				fi
+
+				# get package name
+				if [[ $PACKAGE_NAME_CALL = 'git+'* ]]; then
+					PACKAGE_NAME=$(cut -d '=' -f2 <<< "$PACKAGE_NAME_CALL")
+
+					if [[ $PACKAGE_NAME == '' ]]; then
+						echo -e "${PALETTE_ERROR}When installing a package with git+, you have to add #egg= to specify the package name${PALETTE_RESET}"
+						exit 1
+					fi
+
+				else
+					if [[ $PACKAGE_NAME_CALL = *'#'* ]]; then
+						# cut away comment after package name
+						PACKAGE_NAME_CALL=$(echo "$PACKAGE_NAME_CALL" | cut -f1 -d"#")
+					fi
+
+					if [[ $PACKAGE_NAME_CALL = *';'* ]]; then
+						echo -e "${PALETTE_ERROR}Environment markers are not supported in the package name${PALETTE_RESET}"
+						exit 1
+					fi
+					if [[ $PACKAGE_NAME_CALL = *'['* ]]; then
+						echo -e "${PALETTE_ERROR}Extras definitions not supported in the package name${PALETTE_RESET}"
+						exit 1
+					fi
+
+					# remove version info from package name
+					PACKAGE_NAME="$PACKAGE_NAME_CALL"
+					PACKAGE_NAME=$(cut -d '~' -f1 <<< "$PACKAGE_NAME")
+					PACKAGE_NAME=$(cut -d '!' -f1 <<< "$PACKAGE_NAME")
+					PACKAGE_NAME=$(cut -d '>' -f1 <<< "$PACKAGE_NAME")
+					PACKAGE_NAME=$(cut -d '<' -f1 <<< "$PACKAGE_NAME")
+					PACKAGE_NAME=$(cut -d '=' -f1 <<< "$PACKAGE_NAME")
+				fi
+
+				# run install
+				echo -e "${PALETTE_INFO}singer-cli.sh install $PIP_INSTALL_PRE_ARGS\"$PACKAGE_NAME_CALL\"$PIP_INSTALL_SUB_ARGS${PALETTE_RESET}"
+				bash ./$0 install $PIP_INSTALL_PRE_ARGS"$PACKAGE_NAME_CALL"$PIP_INSTALL_SUB_ARGS
+				RC=$?; [ $RC -ne 0 ] && exit $RC
+			fi
+		done
 	else
 
 		## install from package name or git+ syntax
 
-		PACKAGE_NAME="$2"
+		# the additional parameters to be used with pip
+		PIP_INSTALL_PRE_ARGS='' # pipe args before the package name
+		PIP_INSTALL_SUB_ARGS='' # pipe args after the package name
+		
+		# the package name call (including version information, git etc.)
+		PACKAGE_NAME_CALL=''
 
-		if [[ $PACKAGE_NAME == '' ]]; then
+		# only the package name excl. version information, git etc.
+		PACKAGE_NAME=''
+
+		while [ -n "$2" ]
+		do
+			if [[ $2 = '-'* ]]; then
+				# is a parameter
+				if [[ -n "$PACKAGE_NAME_CALL" ]]; then
+					PIP_INSTALL_SUB_ARGS="$PIP_INSTALL_SUB_ARGS $2"
+				else
+					PIP_INSTALL_PRE_ARGS="$PIP_INSTALL_PRE_ARGS $2"
+				fi
+			else
+				# is package name
+
+				if [ -n "$PACKAGE_NAME_CALL" ]; then
+					echo -e "${PALETTE_ERROR}This shell script does not install multiple packages at once${PALETTE_RESET}"
+					exit 1
+				fi
+
+				PACKAGE_NAME_CALL="$2"
+			fi
+
+			shift
+		done
+
+		if [[ $PACKAGE_NAME_CALL == '' ]]; then
 			echo -e "${PALETTE_ERROR}Package name not given${PALETTE_RESET}"
 			exit 1
 		fi
 
-		PIP_INSTALL_PARAM="$PACKAGE_NAME"
-		if [[ $PACKAGE_NAME = '-e git+'* ]]; then
+		if [[ $PACKAGE_NAME_CALL = 'git+'* ]]; then
 
-			PACKAGE_NAME=$(cut -d '=' -f2 <<< "$PIP_INSTALL_PARAM")
+			PACKAGE_NAME=$(cut -d '=' -f2 <<< "$PACKAGE_NAME_CALL")
 
-			if [[ $PACKAGE_NAME == '' ]] || [[ $PACKAGE_NAME == $PIP_INSTALL_PARAM ]]; then
+			if [[ $PACKAGE_NAME == '' ]] || [[ $PACKAGE_NAME == $PACKAGE_NAME_CALL ]]; then
 				echo -e "${PALETTE_ERROR}When installing a package with git+, you have to add #egg= to specify the package name${PALETTE_RESET}"
 				exit 1
 			fi
 		else
 			# remove version info from package name
+
+			if [[ $PACKAGE_NAME_CALL = *';'* ]]; then
+				echo -e "${PALETTE_ERROR}Environment markers are not supported in the package name${PALETTE_RESET}"
+				exit 1
+			fi
+			if [[ $PACKAGE_NAME_CALL = *'['* ]]; then
+				echo -e "${PALETTE_ERROR}Extras definitions not supported in the package name${PALETTE_RESET}"
+				exit 1
+			fi
+
+			PACKAGE_NAME="$PACKAGE_NAME_CALL"
 			PACKAGE_NAME=$(cut -d '~' -f1 <<< "$PACKAGE_NAME")
 			PACKAGE_NAME=$(cut -d '!' -f1 <<< "$PACKAGE_NAME")
 			PACKAGE_NAME=$(cut -d '>' -f1 <<< "$PACKAGE_NAME")
 			PACKAGE_NAME=$(cut -d '<' -f1 <<< "$PACKAGE_NAME")
 			PACKAGE_NAME=$(cut -d '=' -f1 <<< "$PACKAGE_NAME")
+
+			if [[ $PACKAGE_NAME == '' ]] || [[ $PACKAGE_NAME == $PACKAGE_NAME_CALL ]]; then
+				echo -e "${PALETTE_ERROR}Could not determine package name!${PALETTE_RESET}"
+				exit 1
+			fi
 		fi
 
 		CURRENT_ENV="$VIRTUAL_ENV"
@@ -102,14 +180,14 @@ if [[ $1 == 'install' ]]; then
 
 		if [ -d $PACKAGE_VENV/ ]; then
 			# if venv exists, call pip from venv
-			$PACKAGE_VENV/bin/pip install $PIP_INSTALL_PARAM
+			$PACKAGE_VENV/bin/pip install $PIP_INSTALL_PRE_ARGS $PACKAGE_NAME_CALL$PIP_INSTALL_SUB_ARGS
 		else
 			# if venv does not exists, create venv
 			python -m venv "$PACKAGE_VENV"
 			RC=$?; [ $RC -ne 0 ] && exit $RC
 			$PACKAGE_VENV/bin/pip install wheel
 			RC=$?; [ $RC -ne 0 ] && exit $RC
-			$PACKAGE_VENV/bin/pip install $PIP_INSTALL_PARAM
+			$PACKAGE_VENV/bin/pip install $PIP_INSTALL_PRE_ARGS $PACKAGE_NAME_CALL$PIP_INSTALL_SUB_ARGS
 			RC=$?; [ $RC -ne 0 ] && exit $RC
 
 			# create symbolic link
@@ -177,7 +255,7 @@ elif [[ $1 == 'freeze' ]]; then
 		done
 
 else
-	echo 'singer-cli.sh 0.3.2'
+	echo 'singer-cli.sh 0.4.0'
 	echo 'Usage: singer-cli.sh <command> [args]'
 	echo ''
 	echo 'singer-cli.sh is a simple package manager script for singer.io'
