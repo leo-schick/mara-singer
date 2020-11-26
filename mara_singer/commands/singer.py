@@ -94,7 +94,7 @@ class _SingerTapCommand(Command):
         if self._tap_config:
             if not self.__tmp_config_file_path:
                 self.__tmp_config_file_path = pathlib.Path(config.config_dir()) / f'{self.config_file_name}.tmp-{unique_file_suffix()}'
-            return self.self.__tmp_config_file_path
+            return self.__tmp_config_file_path
         else:
             return pathlib.Path(config.config_dir()) / self.config_file_name
 
