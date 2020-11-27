@@ -186,9 +186,7 @@ class SingerStream:
         """
         schema_dict = self.schema
         if 'type' not in schema_dict or 'object' not in schema_dict['type']:
-            raise Exception('The JSON schema must be of type object to be convertable to a SQL table')
-        if 'additionalProperties' in schema_dict and schema_dict['additionalProperties'] == True:
-            raise Exception('The JSON schema must not allow additional properties in its main object to be convertable to a SQL table')
+            raise Exception(f'The JSON schema for stream {self.name} must be of type object to be convertable to a SQL table')
 
         from .schema import jsonschema
         from .schema import Table
