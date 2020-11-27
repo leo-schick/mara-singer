@@ -274,8 +274,8 @@ def __(db: dbs.PostgreSQLDB, datatype: t.Union[DataType, StructDataType]):
             return 'boolean'
         elif datatype == DataType.JSON:
             return 'jsonb'
-        #elif datatype == DataType.XML:
-        #    return ''
+        elif datatype == DataType.XML:
+            return 'xml'
         else:
             raise NotImplementedError(f'Unexpected data type for PostgreSQLDB {datatype}')
 
@@ -354,18 +354,27 @@ def __(db: dbs.PostgreSQLDB, table: Table, source_table_name: str, replication_m
 
         select_json_property = f'data -> \'{column.name}\''
 
-        if column_type == 'text':
+        if column_type in ['text']:
+            # raw text content
             if column.is_array:
                 select_field = f'ARRAY(SELECT p FROM jsonb_array_elements_text({select_json_property}) p)'
             else:
                 select_field = f'data ->> \'{column.name}\''
-        else:
+        elif column_type in ['date','timestamp','timestamp with time zone','jsonb','xml']:
+            # text content to be casted
             if column.is_array:
-                select_field = f'ARRAY(SELECT CAST( p AS {column_type} ) FROM jsonb_array_elements({select_json_property}) p)'
-            elif column_type == 'timestamp with time zone':
-                select_field = f'CAST(CAST({select_json_property} AS TEXT) AS timestamptz)'
+                select_field = f'ARRAY(SELECT p :: {column_type} FROM jsonb_array_elements_text({select_json_property}) p)'
             else:
-                select_field = f'CAST({select_json_property} AS {column_type})'
+                select_field = f'(data ->> \'{column.name}\') :: {column_type}'
+        else:
+            # value to be casted
+            if column.is_array:
+                select_field = f'ARRAY(SELECT p :: {column_type} FROM jsonb_array_elements({select_json_property}) p)'
+            else:
+                if column.nullable:
+                    select_field = f"CASE WHEN jsonb_typeof({select_json_property}) != 'null' THEN ({select_json_property}) :: {column_type} END"
+                else:
+                    select_field = f'({select_json_property}) :: {column_type}'
 
         if replication_method == ReplicationMethod.INCREMENTAL and column in table.primary_key_columns:
             distinct_on.append(select_field)

@@ -18,7 +18,10 @@ def property_defintion_to_datatype(property_definition) -> (t.Union[DataType, St
             if type == "null":
                 is_nullable = True
             elif type == "object":
-                if 'properties' in property_definition:
+                if 'additionalProperties' in property_definition and property_definition['additionalProperties'] == True:
+                    # a property where the allowed properties are generic --> use JSON as type
+                    field_type = DataType.JSON
+                elif 'properties' in property_definition:
                     struct = StructDataType(name=None)
                     for sub_property_name, sub_property_definition in property_definition['properties'].items():
                         (sub_type, sub_is_nullable, sub_is_array) = property_defintion_to_datatype(sub_property_definition)
