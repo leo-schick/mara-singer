@@ -45,8 +45,9 @@ class _SingerTapCommand(Command):
     def tap_config(self) -> dict:
         """The tap config including the patch from the 'config' arg."""
         tap_config = None
-        if os.path.exists(self.config_file_path()):
-            with open(self.config_file_path(),'r') as config_file:
+        base_config_file_path = pathlib.Path(config.config_dir()) / self.config_file_name
+        if os.path.exists(base_config_file_path):
+            with open(base_config_file_path,'r') as config_file:
                 # TODO: catch config load exceptions here!
                 tap_config = json.load(config_file)
 
@@ -86,7 +87,7 @@ class _SingerTapCommand(Command):
         finally:
             if self._tap_config:
                 os.remove(tmp_config_file_path)
-                self.__tmp_tap_config_path = None
+                self.__tmp_config_file_path = None
 
         return result
 
@@ -107,8 +108,8 @@ class _SingerTapCommand(Command):
     def shell_command(self):
         config_file_path = self.config_file_path()
         if self._tap_config:
-            if self.__tmp_tap_config_path:
-                config_file_path = self.__tmp_tap_config_path
+            if self.__tmp_config_file_path:
+                config_file_path = self.__tmp_config_file_path
             else: # this is only for UI display. In a real run, a unique temp file will be generated
                 config_file_path = pathlib.Path(config.config_dir()) / f'{self.config_file_name}.tmp'
 
