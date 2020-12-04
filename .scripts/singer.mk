@@ -23,10 +23,10 @@ install-singer-packages:
 # update packages from singer-requirements.txt and create singer-requirements.txt.freeze
 update-singer-packages:
 	make .venv/bin/python
-	PYTHONWARNINGS="ignore" .scripts/mara-singer/singer-cli.sh install --requirement=singer-requirements.txt --src=./packages --upgrade --exists-action=w
+	source .venv/bin/activate; PYTHONWARNINGS="ignore" .scripts/mara-singer/singer-cli.sh install --requirement=singer-requirements.txt --src=./packages --upgrade --exists-action=w
 
 	# write freeze file
-	.scripts/mara-singer/singer-cli.sh freeze > singer-requirements.txt.freeze
+	source .venv/bin/activate; .scripts/mara-singer/singer-cli.sh freeze > singer-requirements.txt.freeze
 
 .cleanup-singer:
 	rm -rf $(singer-directory)
