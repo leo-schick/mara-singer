@@ -18,13 +18,13 @@ setup(
 
     install_requires=[
         'singer-python>=5.9.0',
-        'mara-app>=2.0.2',
+        'mara-app>=2.2.0',
         'mara-db>=4.7.0',
         'mara-page>=1.5.1',
         'mara-pipelines>=3.0.0'],
 
     extras_require={
-        'test': ['pytest', 'pytest_click', 'mara-app>=2.2.0'],
+        'test': ['pytest', 'pytest_click'],
     },
 
     packages=find_packages(),

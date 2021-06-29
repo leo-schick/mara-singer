@@ -1,7 +1,6 @@
 """Command execution in bash shells"""
 
 import time
-import threading
 
 from mara_pipelines import config
 from mara_pipelines.logging import logger

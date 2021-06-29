@@ -122,7 +122,7 @@ class _SingerTapCommand(Command):
                 + (f' --state {state_file_path}' if state_file_path and self.pass_state_file else '')
                 + (f' -p {self.catalog_file_path()} --catalog {self.catalog_file_path()}' if self.catalog_file_name else ''))
 
-    def html_doc_items(self) -> [(str, str)]:
+    def html_doc_items(self) -> t.List[t.Tuple[str, str]]:
         config_file_content = self.config_file_path().read_text().strip('\n') if self.config_file_path().exists() else '-- file not found'
         config_final = json.dumps(self.tap_config) if self.config_file_path().exists() or self._tap_config else '-- file not found'
         state = self.state_file_path().read_text().strip('\n') if self.state_file_path().exists() else '-- file not found'
@@ -251,7 +251,7 @@ class _SingerTapReadCommand(_SingerTapCommand):
 
         return command
 
-    def html_doc_items(self) -> [(str, str)]:
+    def html_doc_items(self) -> t.List[t.Tuple[str, str]]:
         doc = super().html_doc_items() + [
             ('stream selection', html.highlight_syntax(json.dumps(self.stream_selection), 'json') if self.stream_selection else None)
         ]
@@ -279,7 +279,7 @@ class SingerTapDiscover(_SingerTapCommand):
     def shell_command(self):
         return (super().shell_command() + f" --discover > {self.new_catalog_file_path()}")
 
-    def html_doc_items(self) -> [(str, str)]:
+    def html_doc_items(self) -> t.List[t.Tuple[str, str]]:
         doc = super().html_doc_items()
         doc.append(('catalog file name', _.i[self.new_catalog_file_name]))
         return doc

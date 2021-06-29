@@ -89,7 +89,7 @@ class SingerTapToFile(_SingerTapReadCommand):
             return False
         return True
 
-    def html_doc_items(self) -> [(str, str)]:
+    def html_doc_items(self) -> t.List[t.Tuple[str, str]]:
         doc = super().html_doc_items() + [
             ('taget format', self.target_format),
             ('destination dir', self.destination_dir)

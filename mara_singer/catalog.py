@@ -2,10 +2,10 @@ import os
 import json
 import pathlib
 import enum
+import typing as t
+
 import singer.catalog
 import singer.metadata
-
-from mara_db import dbs
 
 from . import config
 from .schema import Table
@@ -37,7 +37,7 @@ class SingerCatalog:
         return self._catalog
 
     @property
-    def streams(self) -> [str]:
+    def streams(self) -> t.List[str]:
         if not self._streams:
             self._streams = {}
             catalog = self._load_catalog()
@@ -74,7 +74,7 @@ class SingerStream:
         self.stream = stream
 
     @property
-    def key_properties(self) -> [str]:
+    def key_properties(self) -> t.List[str]:
         """The key properties of the stream"""
         key_properties = self.stream.key_properties
         if not key_properties:
@@ -117,7 +117,7 @@ class SingerStream:
 
             self.stream.metadata = singer.metadata.to_list(mdata)
 
-    def mark_as_selected(self, properties: [str] = None):
+    def mark_as_selected(self, properties: t.List[str] = None):
         mdata = singer.metadata.to_map(self.stream.metadata)
         mdata = singer.metadata.write(mdata, (), 'selected', True)
 
