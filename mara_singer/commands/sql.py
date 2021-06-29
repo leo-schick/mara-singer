@@ -102,7 +102,7 @@ class SingerTapToDB(_SingerTapReadCommand):
         else:
             raise Exception(f'Not supported DB type {type(db)} for command SingerTapToDB')
 
-    def html_doc_items(self) -> [(str, str)]:
+    def html_doc_items(self) -> t.List[t.Tuple[str, str]]:
         doc = super().html_doc_items() + [
             ('target db', _.tt[self.target_db_alias]),
             ('target schema', self.target_schema)
