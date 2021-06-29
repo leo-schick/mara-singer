@@ -2,7 +2,7 @@ import os
 import pathlib
 import json
 
-import singer.bookmarks
+from .singer import bookmarks as singer_bookmarks
 
 from . import config
 
@@ -42,4 +42,4 @@ class SingerTapState:
         if not self._state:
             self._load_state()
 
-        return singer.bookmarks.get_bookmark(self._state, tap_stream_id, key, default=default)
+        return singer_bookmarks.get_bookmark(self._state, tap_stream_id, key, default=default)

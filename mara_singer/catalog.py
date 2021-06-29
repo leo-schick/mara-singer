@@ -4,8 +4,9 @@ import pathlib
 import enum
 import typing as t
 
-import singer.catalog
-import singer.metadata
+from .singer import catalog as singer_catalog
+from .singer import metadata as singer_metadata
+from .singer import schema as singer_schema
 
 from . import config
 from .schema import Table
@@ -27,13 +28,13 @@ class SingerCatalog:
     def catalog_file_path(self) -> pathlib.Path:
         return pathlib.Path(config.catalog_dir()) / self.catalog_file_name
 
-    def _load_catalog(self) -> singer.catalog.Catalog:
+    def _load_catalog(self) -> singer_catalog.Catalog:
         if not self._catalog:
             file_path = self.catalog_file_path()
             if os.path.isfile(file_path) and os.path.getsize(file_path) > 0:
-                self._catalog = singer.catalog.Catalog.load(file_path)
+                self._catalog = singer_catalog.Catalog.load(file_path)
             else:
-                self._catalog = singer.catalog.Catalog(streams=[])
+                self._catalog = singer_catalog.Catalog(streams=[])
         return self._catalog
 
     @property
@@ -69,7 +70,7 @@ class SingerCatalog:
 
 
 class SingerStream:
-    def __init__(self, name: str, stream: singer.catalog.CatalogEntry) -> None:
+    def __init__(self, name: str, stream: singer_catalog.CatalogEntry) -> None:
         self.name = name
         self.stream = stream
 
@@ -78,8 +79,8 @@ class SingerStream:
         """The key properties of the stream"""
         key_properties = self.stream.key_properties
         if not key_properties:
-            mdata = singer.metadata.to_map(self.stream.metadata)
-            key_properties = singer.metadata.get(mdata, (), 'table-key-properties') or singer.metadata.get(mdata, (), 'view-key-properties')
+            mdata = singer_metadata.to_map(self.stream.metadata)
+            key_properties = singer_metadata.get(mdata, (), 'table-key-properties') or singer_metadata.get(mdata, (), 'view-key-properties')
         return key_properties
 
     @property
@@ -89,37 +90,37 @@ class SingerStream:
 
     @property
     def is_selected(self):
-        mdata = singer.metadata.to_map(self.stream.metadata)
+        mdata = singer_metadata.to_map(self.stream.metadata)
         schema_dict = self.schema
         if 'selected' in schema_dict:
             return schema_dict['selected']
-        return singer.metadata.get(mdata, (), 'selected')
+        return singer_metadata.get(mdata, (), 'selected')
 
     def property_is_selected(self, property_name: str):
-        mdata = singer.metadata.to_map(self.stream.metadata)
-        return singer.metadata.get(mdata, ('properties', property_name), 'selected')
+        mdata = singer_metadata.to_map(self.stream.metadata)
+        return singer_metadata.get(mdata, ('properties', property_name), 'selected')
 
     def unmark_as_selected(self):
         schema_dict = self.schema
         if 'selected' in schema_dict:
             schema_dict['selected'] = False
-            self.stream.schema = singer.schema.Schema.from_dict(schema_dict)
+            self.stream.schema = singer_metadata.Schema.from_dict(schema_dict)
 
-        mdata = singer.metadata.to_map(self.stream.metadata)
-        if singer.metadata.get(mdata, (), 'selected'):
-            mdata = singer.metadata.write(mdata, (), 'selected', False)
+        mdata = singer_metadata.to_map(self.stream.metadata)
+        if singer_metadata.get(mdata, (), 'selected'):
+            mdata = singer_metadata.write(mdata, (), 'selected', False)
 
             # set properties to not selected
-            for metadata in singer.metadata.to_list(mdata):
+            for metadata in singer_metadata.to_list(mdata):
                 if len(metadata.breadcrumb) == 2 and metadata.breadcrumb[1] == 'properties':
-                    if singer.metadata.get(mdata, metadata.breadcrumb, 'selected'):
-                        mdata = singer.metadata.write(mdata, (), 'selected', False)
+                    if singer_metadata.get(mdata, metadata.breadcrumb, 'selected'):
+                        mdata = singer_metadata.write(mdata, (), 'selected', False)
 
-            self.stream.metadata = singer.metadata.to_list(mdata)
+            self.stream.metadata = singer_metadata.to_list(mdata)
 
     def mark_as_selected(self, properties: t.List[str] = None):
-        mdata = singer.metadata.to_map(self.stream.metadata)
-        mdata = singer.metadata.write(mdata, (), 'selected', True)
+        mdata = singer_metadata.to_map(self.stream.metadata)
+        mdata = singer_metadata.write(mdata, (), 'selected', True)
 
         def breadcrumb_name(breadcrumb):
             name = ".".join(breadcrumb)
@@ -133,26 +134,26 @@ class SingerStream:
 
                 property_name = breadcrumb_name(breadcrumb)
 
-                if singer.metadata.get(mdata, breadcrumb, 'inclusion') == 'automatic':
+                if singer_metadata.get(mdata, breadcrumb, 'inclusion') == 'automatic':
                     selected = True
                 elif properties:
                     selected = property_name in properties
-                elif singer.metadata.get(mdata, breadcrumb, 'selected-by-default'):
+                elif singer_metadata.get(mdata, breadcrumb, 'selected-by-default'):
                     selected = True
 
                 if property_name in (properties or []):
                     selected = True
 
-                mdata = singer.metadata.write(mdata, breadcrumb, 'selected', selected)
+                mdata = singer_metadata.write(mdata, breadcrumb, 'selected', selected)
 
-        self.stream.metadata = singer.metadata.to_list(mdata)
+        self.stream.metadata = singer_metadata.to_list(mdata)
 
         if not properties:
             # legacy implementation
             schema_dict = self.schema
             schema_dict['selected'] = True
 
-            self.stream.schema = singer.schema.Schema.from_dict(schema_dict)
+            self.stream.schema = singer_schema.Schema.from_dict(schema_dict)
 
     @property
     def replication_method(self) -> str:
@@ -163,8 +164,8 @@ class SingerStream:
         if replication_method: 
             return replication_method
 
-        mdata = singer.metadata.to_map(self.stream.metadata)
-        return singer.metadata.get(mdata, (), 'forced-replication-method') or singer.metadata.get(mdata, (), 'replication-method')
+        mdata = singer_metadata.to_map(self.stream.metadata)
+        return singer_metadata.get(mdata, (), 'forced-replication-method') or singer_metadata.get(mdata, (), 'replication-method')
 
     @property
     def replication_key(self) -> str:
@@ -175,8 +176,8 @@ class SingerStream:
         if replication_key: 
             return replication_key
 
-        mdata = singer.metadata.to_map(self.stream.metadata)
-        return singer.metadata.get(mdata, (), 'replication-key')
+        mdata = singer_metadata.to_map(self.stream.metadata)
+        return singer_metadata.get(mdata, (), 'replication-key')
 
     def to_table(self) -> Table:
         """
@@ -191,8 +192,8 @@ class SingerStream:
         from .schema import jsonschema
         from .schema import Table
 
-        mdata = singer.metadata.to_map(self.stream.metadata)
-        schema_name = singer.metadata.get(mdata, (), 'schema-name')
+        mdata = singer_metadata.to_map(self.stream.metadata)
+        schema_name = singer_metadata.get(mdata, (), 'schema-name')
 
         table = Table(
             table_name=self.name,
@@ -209,9 +210,9 @@ class SingerStream:
                     selected = True
             else:
                 # use default selection
-                if singer.metadata.get(mdata, ('properties', property_name), 'inclusion') == 'automatic':
+                if singer_metadata.get(mdata, ('properties', property_name), 'inclusion') == 'automatic':
                     selected = True
-                elif singer.metadata.get(mdata, ('properties', property_name), 'selected-by-default'):
+                elif singer_metadata.get(mdata, ('properties', property_name), 'selected-by-default'):
                     selected = True
 
             if selected:
