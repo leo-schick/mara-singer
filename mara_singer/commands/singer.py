@@ -61,7 +61,7 @@ class _SingerTapCommand(Command):
 
         return tap_config
 
-    def run(self) -> bool:
+    def run(self, *args, **kargs) -> bool:
         """
         Runs the command
 
@@ -187,7 +187,7 @@ class _SingerTapReadCommand(_SingerTapCommand):
             self.__target_config_path = pathlib.Path(config.config_dir()) / f'{self._target_name()}.json.tmp-{unique_file_suffix()}'
         return self.__target_config_path
 
-    def run(self) -> bool:
+    def run(self, *args, **kargs) -> bool:
         # create temp catalog (if necessary)
         tmp_catalog_file_path = None
         if self.stream_selection:
@@ -230,7 +230,7 @@ class _SingerTapReadCommand(_SingerTapCommand):
                 return False
 
             # execute shell command
-            if not super().run():
+            if not super().run(*args, **kargs):
                 return False
         finally:
             if self.stream_selection:
