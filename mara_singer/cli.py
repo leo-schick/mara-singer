@@ -23,7 +23,7 @@ def discover(tap_name: str, config_file_name: str = None, catalog_file_name: str
     """Run discover for a singer tap"""
 
     from mara_pipelines.pipelines import Pipeline, Task
-    from commands.singer import SingerTapDiscover
+    from .commands.singer import SingerTapDiscover
 
 
 
