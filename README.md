@@ -66,7 +66,7 @@ pipeline.add(
 
 Edit the requirements.txt:
 * make sure that mara-db uses 4.7.0 or higher
-* add the line `-e git+https://github.com/leo-lschick/mara-singer.git@0.8.x#egg=mara-singer` to the file
+* add the line `-e git+https://github.com/leo-lschick/mara-singer.git@0.8.0#egg=mara-singer` to the file
 
 ### Step 2 -- Install module
 
