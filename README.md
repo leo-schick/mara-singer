@@ -2,8 +2,6 @@
 
 This package contains a mara implementation for [singer.io](https://www.singer.io/).
 
-:warning: This package is under development, breaking changes might be done during each minor version iteration.
-
 &nbsp;
 
 ## Installation
@@ -11,7 +9,7 @@ This package contains a mara implementation for [singer.io](https://www.singer.i
 To use the library directly:
 
 ```bash
-pip install git+https://github.com/hz-lschick/mara-singer.git
+pip install git+https://github.com/leo-lschick/mara-singer.git
 ```
 
 &nbsp;
@@ -68,7 +66,7 @@ pipeline.add(
 
 Edit the requirements.txt:
 * make sure that mara-db uses 4.7.0 or higher
-* add the line `-e git+https://github.com/hz-lschick/mara-singer.git@0.7.0#egg=mara-singer` to the file
+* add the line `-e git+https://github.com/leo-lschick/mara-singer.git@0.7.0#egg=mara-singer` to the file
 
 ### Step 2 -- Install module
 
@@ -140,9 +138,3 @@ git commit -m 'install mara-singer module'
 ```
 
 Congratulation :tada: you have now completed the mara-singer package installation!
-
-&nbsp;
-
-## Getting started
-
-TBD
