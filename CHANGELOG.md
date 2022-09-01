@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.8.0 (2022-09-01)
+
+- move .scripts files inside python package
+- refactoring
+- add reading table schema from singer catalog file
+- removing dependency to singer-python package, integrate needed functions into this package
+- add option to use custom config and catalog file when running mara_singer.cli.discover
+- remove standard pipeline to discover all taps, remove tap list configuration (`def tap_names()`)
+- remove `use_legacy_properties_arg` option from mara commands
+- remove `mara_singer.swite_up` and `mara_singer.sync` logic
+
 ## 0.7.6 (2020-10-19)
 
 - use loose version requirement for singer-python<br/>
