@@ -1,19 +1,11 @@
 # singer taps/targets handling
 
-# set variables unless already set earlier
-singer-directory ?= .singer
-
-# the directory of this Makefile in project
-mara-singer-scripts-dir := $(dir $(lastword $(MAKEFILE_LIST)))
-
-# where mara-singer is installed relative to the project root
-mara-singer-package-dir ?= packages/mara-singer
-
 setup-singer: .copy-mara-singer-scripts
 
 # copy scripts from mara-singer package to project code
+.copy-mara-singer-scripts: MODULE_LOCATION != .venv/bin/python -m pip show mara-singer | sed -n -e 's/Location: //p'
 .copy-mara-singer-scripts:
-	rsync --archive --recursive --itemize-changes  --delete $(mara-singer-package-dir)/.scripts/ $(mara-singer-scripts-dir)
+	rsync --archive --recursive --itemize-changes  --delete $(MODULE_LOCATION)/mara_singer/.scripts/ .scripts/mara-singer/
 
 # install singer packages from singer-requirements.txt.freeze
 install-singer-packages:
@@ -29,4 +21,4 @@ update-singer-packages:
 	source .venv/bin/activate; .scripts/mara-singer/singer-cli.sh freeze > singer-requirements.txt.freeze
 
 .cleanup-singer:
-	rm -rf $(singer-directory)
+	rm -rf .singer
