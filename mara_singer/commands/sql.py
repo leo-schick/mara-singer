@@ -95,7 +95,7 @@ class SingerTapToDB(_SingerTapReadCommand):
             # NOTE: self.target_schema is not used here because target-sqlite doesn't support this! ; we use optimistic behavior here and don't throw an error
             #       It would probably be better to implement a prefix option in target-sqlite instead of just ignoring self.target_schem
 
-            # Reference: https://gitlab.com/meltano/target-sqlite
+            # Reference: https://github.com/MeltanoLabs/target-sqlite
             config.update({
                 'database': db.file_name
             })
