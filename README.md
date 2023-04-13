@@ -1,3 +1,7 @@
+## :warning: Out of maintenance and out of support
+
+I do not use this package in any production environment anymore in advance to [Airbyte](https://github.com/airbytehq/airbyte). I do not plan to perform any further updates, support or maintenance activiry here. In case you are looking for an ELT tool to download source data, I recommend you taking a look at [Airbyte](https://github.com/airbytehq/airbyte).
+
 # Mara Singer
 
 This package contains a mara implementation for [singer.io](https://www.singer.io/).
